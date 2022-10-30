@@ -2,18 +2,18 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>架构设计 on comien</title>
-    <link>comien.github.io/series/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/</link>
+    <link>https://comien.github.io/series/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/</link>
     <description>Recent content in 架构设计 on comien</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>ja</language>
     <copyright>&amp;copy; Copyright 2017 Foo Bar</copyright>
-    <lastBuildDate>Sun, 30 Oct 2022 00:00:00 +0000</lastBuildDate><atom:link href="comien.github.io/series/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 30 Oct 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/series/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>架构是什么？怎么设计架构？</title>
-      <link>comien.github.io/posts/%E6%9E%B6%E6%9E%84/</link>
+      <link>https://comien.github.io/posts/%E6%9E%B6%E6%9E%84/</link>
       <pubDate>Sun, 30 Oct 2022 00:00:00 +0000</pubDate>
       
-      <guid>comien.github.io/posts/%E6%9E%B6%E6%9E%84/</guid>
+      <guid>https://comien.github.io/posts/%E6%9E%B6%E6%9E%84/</guid>
       <description>&lt;p&gt;程序员入行的时候，有一个进阶目标——架构师。&lt;br&gt;
 但是，架构师到底是什么？什么是架构？&lt;/p&gt;</description>
     </item>

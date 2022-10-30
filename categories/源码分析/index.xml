@@ -2,45 +2,45 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>源码分析 on comien</title>
-    <link>comien.github.io/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</link>
+    <link>https://comien.github.io/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</link>
     <description>Recent content in 源码分析 on comien</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>ja</language>
     <copyright>&amp;copy; Copyright 2017 Foo Bar</copyright>
-    <lastBuildDate>Sat, 30 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="comien.github.io/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 30 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>FIFO 环形队列</title>
-      <link>comien.github.io/posts/fifo/</link>
+      <link>https://comien.github.io/posts/fifo/</link>
       <pubDate>Sat, 30 Jul 2022 00:00:00 +0000</pubDate>
       
-      <guid>comien.github.io/posts/fifo/</guid>
+      <guid>https://comien.github.io/posts/fifo/</guid>
       <description>&lt;p&gt;FiFO(first in first out) 先进先出环形队列，数组实现&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Ring Buffer</title>
-      <link>comien.github.io/posts/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/</link>
+      <link>https://comien.github.io/posts/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/</link>
       <pubDate>Sat, 30 Jul 2022 00:00:00 +0000</pubDate>
       
-      <guid>comien.github.io/posts/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/</guid>
+      <guid>https://comien.github.io/posts/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/</guid>
       <description>&lt;p&gt;ring buffer 是开发中比较实用的数据结构，实现也很简单。&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>一致性哈希</title>
-      <link>comien.github.io/posts/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/</link>
+      <link>https://comien.github.io/posts/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/</link>
       <pubDate>Sun, 17 Jul 2022 00:00:00 +0000</pubDate>
       
-      <guid>comien.github.io/posts/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/</guid>
+      <guid>https://comien.github.io/posts/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/</guid>
       <description>&lt;p&gt;分析 go-zero 中的一致性哈希。源码在 core/hash/consistenthash.go&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>go-cron 源码分析</title>
-      <link>comien.github.io/posts/go-cron/</link>
+      <link>https://comien.github.io/posts/go-cron/</link>
       <pubDate>Wed, 06 Jul 2022 00:00:00 +0000</pubDate>
       
-      <guid>comien.github.io/posts/go-cron/</guid>
+      <guid>https://comien.github.io/posts/go-cron/</guid>
       <description>&lt;p&gt;go-cron 是我们开发中经常使用的定时任务库&lt;/p&gt;</description>
     </item>
     

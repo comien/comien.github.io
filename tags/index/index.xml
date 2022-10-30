@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>index on comien</title>
-    <link>comien.github.io/tags/index/</link>
+    <link>https://comien.github.io/tags/index/</link>
     <description>Recent content in index on comien</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>ja</language>
-    <copyright>&amp;copy; Copyright 2017 Foo Bar</copyright><atom:link href="comien.github.io/tags/index/index.xml" rel="self" type="application/rss+xml" />
+    <copyright>&amp;copy; Copyright 2017 Foo Bar</copyright><atom:link href="https://comien.github.io/tags/index/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Posts</title>
-      <link>comien.github.io/posts/</link>
+      <link>https://comien.github.io/posts/</link>
       <pubDate>Sun, 30 Oct 2022 00:00:00 +0000</pubDate>
       
-      <guid>comien.github.io/posts/</guid>
+      <guid>https://comien.github.io/posts/</guid>
       <description></description>
     </item>
     
