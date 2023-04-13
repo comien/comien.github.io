@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <title>redis sds - comien</title>
+  <meta property="og:title" content="redis sds - comien" />
+  <meta name="twitter:title" content="redis sds - comien" />
+  <meta name="description" content="redis sds 字符串源码分析">
+  <meta property="og:description" content="redis sds 字符串源码分析">
+  <meta name="twitter:description" content="redis sds 字符串源码分析">
+  <meta name="author" content="Foo Bar"/>
+  <meta property="og:site_name" content="comien" />
+  <meta property="og:url" content="https://comien.github.io/posts/redis-sds/" />
+  <meta property="og:type" content="article" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="generator" content="Hugo 0.97.0" />
+
+  <link rel="stylesheet" href="/css/style.css" media="all" />
+  <link rel="stylesheet" href="/css/syntax.css" media="all" />
+  <link rel="stylesheet" href="/css/custom.css" media="all" />
+
+  <script src="/js/script.js"></script>
+  <script src="/js/custom.js"></script>
+  <script defer src="/js/fontawesome.js"></script>
+</head>
+
+<body>
+
+<header class="site-header">
+  <nav class="site-navi">
+    <h1 class="site-title"><a href="/">comien</a></h1>
+    <ul class="site-navi-items">
+      <li class="site-navi-item-categories"><a href="/categories/" title="Categories">Categories</a></li>
+      <li class="site-navi-item-tags"><a href="/tags/" title="Tags">Tags</a></li>
+      <li class="site-navi-item-archives"><a href="/archives/" title="Archives">Archives</a></li>
+      <li class="site-navi-item-about"><a href="/about/" title="About">About</a></li>
+    </ul>
+  </nav>
+</header>
+<hr class="site-header-bottom">
+
+  <div class="main" role="main">
+    <article class="article">
+      
+      <p class="article-title-series"><a href="/series/redis-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">redis 源码分析</a>&nbsp;/</p>
+      <h1 class="article-title">redis sds</h1>
+      
+      <hr class="article-title-bottom">
+      <ul class="article-meta">
+        <li class="article-meta-date"><time>April 13, 2023</time></li>
+        <li class="article-meta-categories">
+          <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+            <i class="fas fa-folder"></i>
+            源码分析
+          </a>&nbsp;
+        </li>
+        <li class="article-meta-tags">
+          <a href="/tags/redis/">
+            <i class="fas fa-tag"></i>
+            redis
+          </a>&nbsp;
+        </li>
+        <li class="article-meta-tags">
+          <a href="/tags/c/">
+            <i class="fas fa-tag"></i>
+            c
+          </a>&nbsp;
+        </li>
+        <li class="article-meta-tags">
+          <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
+            <i class="fas fa-tag"></i>
+            源码分析
+          </a>&nbsp;
+        </li>
+      </ul>
+      
+<aside class="toc">
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="#sds-定义">sds 定义</a></li>
+    <li><a href="#sds-与-char--有什么不同">sds 与 char * 有什么不同？</a>
+      <ul>
+        <li><a href="#sds-类型定义">sds 类型定义</a></li>
+        <li><a href="#sdshdr5">sdshdr5</a></li>
+      </ul>
+    </li>
+    <li><a href="#内存释放">内存释放</a></li>
+    <li><a href="#重新分配">重新分配</a></li>
+    <li><a href="#字符串拼接">字符串拼接</a></li>
+  </ul>
+</nav>
+</aside>
+      <p>分析 redis 5 版本源码</p>
+<h2 id="sds-定义">sds 定义</h2>
+<p>redis 中的字符串，使用了自定义的数据结构 sds</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="line"><span class="cl"><span class="c1">// 下边的描述取自 redis sdsnewlen
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 可以通过 printf 打印字符串，末尾包含 \0
+</span></span></span><span class="line"><span class="cl"><span class="c1">// sds 字符串是二进制安全的，在字符串原始数据中可以包含 \0
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 并且字符串的长度存在 sds header 中
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="cm">/* You can print the string with printf() as there is an implicit \0 at the
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * end of the string. However the string is binary safe and can contain
+</span></span></span><span class="line"><span class="cl"><span class="cm"> * \0 characters in the middle, as the length is stored in the sds header.*/</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>从sds 的定义可以看出，sds 也还是 c 语言的 char *</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="line"><span class="cl"><span class="k">typedef</span> <span class="kt">char</span> <span class="o">*</span><span class="n">sds</span><span class="p">;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>为什么不直接使用 char * 呢?</p>
+<p>c 语言中的的 char *，通过 \0 标志字符串的结束，存在两个问题</p>
+<ul>
+<li>
+<p>如果存储的数据中包含了 \0，字符串就会读取错误，比如，strlen，遍历字符串，发现 \0 会返回长度</p>
+</li>
+<li>
+<p>strlen，需要遍历所有字符直到 \0，返回字符串长度，有性能损耗</p>
+</li>
+</ul>
+<h2 id="sds-与-char--有什么不同">sds 与 char * 有什么不同？</h2>
+<h3 id="sds-类型定义">sds 类型定义</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="line"><span class="cl"><span class="c1">// sds 类型定义，因为 char 是 8位，所以可以使用 char 接收
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="cp">#define SDS_TYPE_5  0
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define SDS_TYPE_8  1
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define SDS_TYPE_16 2
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define SDS_TYPE_32 3
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define SDS_TYPE_64 4
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h3 id="sdshdr5">sdshdr5</h3>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="line"><span class="cl"><span class="c1">// __attribute__ ((__packed__))
+</span></span></span><span class="line"><span class="cl"><span class="c1">// gcc 编译器指令优化，告诉编译器不使用字节的对齐方式（字节对其方式会有空间浪费）用紧凑模式进行内存对齐
+</span></span></span><span class="line"><span class="cl"><span class="c1">// lsb 是小端序，msb是大端序
+</span></span></span><span class="line"><span class="cl"><span class="c1">// char 长度一个字节8位，小端序3位用于指定类型，大端序5位用于指定长度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">struct</span> <span class="nf">__attribute__</span> <span class="p">((</span><span class="n">__packed__</span><span class="p">))</span> <span class="n">sdshdr5</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">flags</span><span class="p">;</span> <span class="cm">/* 3 lsb of type, and 5 msb of string length */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">buf</span><span class="p">[];</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">struct</span> <span class="nf">__attribute__</span> <span class="p">((</span><span class="n">__packed__</span><span class="p">))</span> <span class="n">sdshdr8</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// len 字符串长度，所以长度最大值 2^8，所以不超过256字节
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">uint8_t</span> <span class="n">len</span><span class="p">;</span> <span class="cm">/* used */</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 排除头和 \0 的长度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">uint8_t</span> <span class="n">alloc</span><span class="p">;</span> <span class="cm">/* excluding the header and null terminator */</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 小端序 3 位指定类型
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">flags</span><span class="p">;</span> <span class="cm">/* 3 lsb of type, 5 unused bits */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">buf</span><span class="p">[];</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nf">__attribute__</span> <span class="p">((</span><span class="n">__packed__</span><span class="p">))</span> <span class="n">sdshdr16</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 长度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">uint16_t</span> <span class="n">len</span><span class="p">;</span> <span class="cm">/* used */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uint16_t</span> <span class="n">alloc</span><span class="p">;</span> <span class="cm">/* excluding the header and null terminator */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">flags</span><span class="p">;</span> <span class="cm">/* 3 lsb of type, 5 unused bits */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">buf</span><span class="p">[];</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nf">__attribute__</span> <span class="p">((</span><span class="n">__packed__</span><span class="p">))</span> <span class="n">sdshdr32</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uint32_t</span> <span class="n">len</span><span class="p">;</span> <span class="cm">/* used */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uint32_t</span> <span class="n">alloc</span><span class="p">;</span> <span class="cm">/* excluding the header and null terminator */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">flags</span><span class="p">;</span> <span class="cm">/* 3 lsb of type, 5 unused bits */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">buf</span><span class="p">[];</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="k">struct</span> <span class="nf">__attribute__</span> <span class="p">((</span><span class="n">__packed__</span><span class="p">))</span> <span class="n">sdshdr64</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uint64_t</span> <span class="n">len</span><span class="p">;</span> <span class="cm">/* used */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uint64_t</span> <span class="n">alloc</span><span class="p">;</span> <span class="cm">/* excluding the header and null terminator */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">flags</span><span class="p">;</span> <span class="cm">/* 3 lsb of type, 5 unused bits */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">buf</span><span class="p">[];</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span><span class="lnt">79
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="line"><span class="cl"><span class="c1">// sdsnewlen 创建字符串传入两个参数
+</span></span></span><span class="line"><span class="cl"><span class="c1">// init 是旧字符串，initlen 长度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">sds</span> <span class="nf">sdsnewlen</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">init</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">initlen</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="o">*</span><span class="n">sh</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sds</span> <span class="n">s</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 根据初始化长度，获取 sds 类型
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// 返回 sds 类型
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">char</span> <span class="n">type</span> <span class="o">=</span> <span class="n">sdsReqType</span><span class="p">(</span><span class="n">initlen</span><span class="p">);</span> 
+</span></span><span class="line"><span class="cl">    <span class="c1">// 空字符串通常用于 append，因为 type 5 做 append 不是很好，所以使用 type 8
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="cm">/* Empty strings are usually created in order to append. Use type 8
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * since type 5 is not good at this. */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">type</span> <span class="o">==</span> <span class="n">SDS_TYPE_5</span> <span class="o">&amp;&amp;</span> <span class="n">initlen</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="n">type</span> <span class="o">=</span> <span class="n">SDS_TYPE_8</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 根据 sds 数据类型获取字符串长度，在 sds.h 中定义了 sdshdr 不同类型结构体
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// 每个类型的字段不同，长度就不同，这里返回的是 sds 实际长度，就是结构体长度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">int</span> <span class="n">hdrlen</span> <span class="o">=</span> <span class="n">sdsHdrSize</span><span class="p">(</span><span class="n">type</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">fp</span><span class="p">;</span> <span class="cm">/* flags pointer. */</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1">// size_t 避免溢出
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">assert</span><span class="p">(</span><span class="n">hdrlen</span><span class="o">+</span><span class="n">initlen</span><span class="o">+</span><span class="mi">1</span> <span class="o">&gt;</span> <span class="n">initlen</span><span class="p">);</span> <span class="cm">/* Catch size_t overflow */</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// s_malloc 是对malloc封装，如果申请内存失败，程序调用 sdsOomAbort 退出
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// 申请内存不指定具体类型
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// 头长度 + 初始化长度 + \0
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">sh</span> <span class="o">=</span> <span class="n">s_malloc</span><span class="p">(</span><span class="n">hdrlen</span><span class="o">+</span><span class="n">initlen</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">init</span><span class="o">==</span><span class="n">SDS_NOINIT</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">init</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">init</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">memset</span><span class="p">(</span><span class="n">sh</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">hdrlen</span><span class="o">+</span><span class="n">initlen</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// 初始化内存中所有的值都为0
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">sh</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span> <span class="c1">// 空指针返回
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// sh 强转 char *，此时指针就是首地址，+hdrlen 就是实际字符串内容的部分
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">s</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">sh</span><span class="o">+</span><span class="n">hdrlen</span><span class="p">;</span> 
+</span></span><span class="line"><span class="cl">    <span class="c1">// fp 是 字符串真实内容前一个字节，就是 flags
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">fp</span> <span class="o">=</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">s</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 下面根据类型，把 type 写进 flags
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">switch</span><span class="p">(</span><span class="n">type</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">SDS_TYPE_5</span><span class="p">:</span> <span class="p">{</span> <span class="c1">// 类型 5 长度比较特殊，在flags 低 5位
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="n">type</span> <span class="o">|</span> <span class="p">(</span><span class="n">initlen</span> <span class="o">&lt;&lt;</span> <span class="n">SDS_TYPE_BITS</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">SDS_TYPE_8</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">          
+</span></span><span class="line"><span class="cl">            <span class="c1">// #define SDS_HDR_VAR(T,s) struct sdshdr##T *sh = (void*)((s)-(sizeof(struct sdshdr##T)));
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="c1">// 从该宏定义，##T 就是获取第一个参数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="c1">// 所以这里 struct 就是 sdshdr8
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="c1">// s 是真实数据地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="c1">// 减去结构体长度，得到的就是头的地址，赋值给sh 
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="n">SDS_HDR_VAR</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="n">s</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="n">sh</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="n">initlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="n">sh</span><span class="o">-&gt;</span><span class="n">alloc</span> <span class="o">=</span> <span class="n">initlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="n">type</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">SDS_TYPE_16</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">SDS_HDR_VAR</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="n">s</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="n">sh</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="n">initlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="n">sh</span><span class="o">-&gt;</span><span class="n">alloc</span> <span class="o">=</span> <span class="n">initlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="n">type</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">SDS_TYPE_32</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">SDS_HDR_VAR</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span><span class="n">s</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="n">sh</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="n">initlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="n">sh</span><span class="o">-&gt;</span><span class="n">alloc</span> <span class="o">=</span> <span class="n">initlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="n">type</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">SDS_TYPE_64</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">SDS_HDR_VAR</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span><span class="n">s</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="n">sh</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="n">initlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="n">sh</span><span class="o">-&gt;</span><span class="n">alloc</span> <span class="o">=</span> <span class="n">initlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="n">type</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">initlen</span> <span class="o">&amp;&amp;</span> <span class="n">init</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// 把旧字符串的内容拷贝到sds真实字符串
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">memcpy</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">initlen</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">s</span><span class="p">[</span><span class="n">initlen</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;\0&#39;</span><span class="p">;</span> <span class="c1">// 加上结束符
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">return</span> <span class="n">s</span><span class="p">;</span> <span class="c1">// 最后返回的还是真实字符串的地址
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>所以，redis 中的字符串，在真实数据前，加入了类型和长度信息，获取长度时，就不需要再遍历整个字符串，并且 \0 对数据也没有了影响。</p>
+<h2 id="内存释放">内存释放</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="line"><span class="cl"><span class="c1">// 对于 sds 需要使用它听过的释放函数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kt">void</span> <span class="nf">sdsfree</span><span class="p">(</span><span class="n">sds</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 因为 sds 是真实字符串的地址，所以需要减去长度，获取到头信息的地址，整体释放
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">s_free</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">s</span><span class="o">-</span><span class="n">sdsHdrSize</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]));</span> 
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="重新分配">重新分配</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="line"><span class="cl"><span class="c1">// 对 sds 中头信息，重新设置长度值
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 这里 len 表示真实字符串的长度
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 所以把len 设置为 0，sds 内存不需要释放
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">static</span> <span class="kr">inline</span> <span class="kt">void</span> <span class="nf">sdssetlen</span><span class="p">(</span><span class="n">sds</span> <span class="n">s</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">newlen</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">flags</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">];</span> <span class="c1">// 类型
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">switch</span><span class="p">(</span><span class="n">flags</span><span class="o">&amp;</span><span class="n">SDS_TYPE_MASK</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">SDS_TYPE_5</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="p">{</span>
+</span></span><span class="line"><span class="cl">                <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="p">((</span><span class="kt">unsigned</span> <span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">s</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">                <span class="o">*</span><span class="n">fp</span> <span class="o">=</span> <span class="n">SDS_TYPE_5</span> <span class="o">|</span> <span class="p">(</span><span class="n">newlen</span> <span class="o">&lt;&lt;</span> <span class="n">SDS_TYPE_BITS</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="p">}</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">SDS_TYPE_8</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">SDS_HDR</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="n">s</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="n">newlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">SDS_TYPE_16</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">SDS_HDR</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="n">s</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="n">newlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">SDS_TYPE_32</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">SDS_HDR</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span><span class="n">s</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="n">newlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">case</span> <span class="nl">SDS_TYPE_64</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">SDS_HDR</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span><span class="n">s</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">len</span> <span class="o">=</span> <span class="n">newlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="字符串拼接">字符串拼接</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="line"><span class="cl"><span class="c1">// s 
+</span></span></span><span class="line"><span class="cl"><span class="c1">// t 拼接的字符串
+</span></span></span><span class="line"><span class="cl"><span class="c1">// len 拼接长度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">sds</span> <span class="nf">sdscatlen</span><span class="p">(</span><span class="n">sds</span> <span class="n">s</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">t</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">len</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">size_t</span> <span class="n">curlen</span> <span class="o">=</span> <span class="n">sdslen</span><span class="p">(</span><span class="n">s</span><span class="p">);</span> <span class="c1">// sds 当前长度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="n">s</span> <span class="o">=</span> <span class="n">sdsMakeRoomFor</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">len</span><span class="p">);</span> <span class="c1">// 是否需要长度扩充内存
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">s</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">memcpy</span><span class="p">(</span><span class="n">s</span><span class="o">+</span><span class="n">curlen</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span> <span class="c1">// 拷贝
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">sdssetlen</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">curlen</span><span class="o">+</span><span class="n">len</span><span class="p">);</span> <span class="c1">// 新的 len
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">s</span><span class="p">[</span><span class="n">curlen</span><span class="o">+</span><span class="n">len</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">s</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-C" data-lang="C"><span class="line"><span class="cl"><span class="n">sds</span> <span class="nf">sdsMakeRoomFor</span><span class="p">(</span><span class="n">sds</span> <span class="n">s</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">addlen</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="o">*</span><span class="n">newsh</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// sds 剩余可用的长度 alloc - len
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">size_t</span> <span class="n">avail</span> <span class="o">=</span> <span class="n">sdsavail</span><span class="p">(</span><span class="n">s</span><span class="p">);</span> 
+</span></span><span class="line"><span class="cl">    <span class="n">size_t</span> <span class="n">len</span><span class="p">,</span> <span class="n">newlen</span><span class="p">,</span> <span class="n">reqlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// sds 类型
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// SDS_TYPE_MASK 是7 二进制是 111，就是获取高三位，即 sds 类型
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">char</span> <span class="n">type</span><span class="p">,</span> <span class="n">oldtype</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">SDS_TYPE_MASK</span><span class="p">;</span> 
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">hdrlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* Return ASAP if there is enough space left. */</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 如果剩余内存够用，直接返回 sds
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">avail</span> <span class="o">&gt;=</span> <span class="n">addlen</span><span class="p">)</span> <span class="k">return</span> <span class="n">s</span><span class="p">;</span> 
+</span></span><span class="line"><span class="cl">    <span class="c1">// sds 的 len
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">len</span> <span class="o">=</span> <span class="n">sdslen</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 头信息
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">sh</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">s</span><span class="o">-</span><span class="n">sdsHdrSize</span><span class="p">(</span><span class="n">oldtype</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 新的len
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">reqlen</span> <span class="o">=</span> <span class="n">newlen</span> <span class="o">=</span> <span class="p">(</span><span class="n">len</span><span class="o">+</span><span class="n">addlen</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 防止溢出
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">assert</span><span class="p">(</span><span class="n">newlen</span> <span class="o">&gt;</span> <span class="n">len</span><span class="p">);</span>   <span class="cm">/* Catch size_t overflow */</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 如果新长度 &lt; 1024*1024 就用2倍长度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">newlen</span> <span class="o">&lt;</span> <span class="n">SDS_MAX_PREALLOC</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">newlen</span> <span class="o">*=</span> <span class="mi">2</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">else</span> <span class="c1">// 否则就加 1024*1024
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">newlen</span> <span class="o">+=</span> <span class="n">SDS_MAX_PREALLOC</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 计算新的类型
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">type</span> <span class="o">=</span> <span class="n">sdsReqType</span><span class="p">(</span><span class="n">newlen</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* Don&#39;t use type 5: the user is appending to the string and type 5 is
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * not able to remember empty space, so sdsMakeRoomFor() must be called
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * at every appending operation. */</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// type 5 弃用
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">type</span> <span class="o">==</span> <span class="n">SDS_TYPE_5</span><span class="p">)</span> <span class="n">type</span> <span class="o">=</span> <span class="n">SDS_TYPE_8</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 头长度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">hdrlen</span> <span class="o">=</span> <span class="n">sdsHdrSize</span><span class="p">(</span><span class="n">type</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 断言未溢出
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">assert</span><span class="p">(</span><span class="n">hdrlen</span> <span class="o">+</span> <span class="n">newlen</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="n">reqlen</span><span class="p">);</span>  <span class="cm">/* Catch size_t overflow */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">oldtype</span><span class="o">==</span><span class="n">type</span><span class="p">)</span> <span class="p">{</span> 
+</span></span><span class="line"><span class="cl">        <span class="c1">// 类型没有变,头信息就没变，可以使用 realloc
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">newsh</span> <span class="o">=</span> <span class="n">s_realloc</span><span class="p">(</span><span class="n">sh</span><span class="p">,</span> <span class="n">hdrlen</span><span class="o">+</span><span class="n">newlen</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">newsh</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">s</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">newsh</span><span class="o">+</span><span class="n">hdrlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="cm">/* Since the header size changes, need to move the string forward,
+</span></span></span><span class="line"><span class="cl"><span class="cm">         * and can&#39;t use realloc */</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// 类型发生改变，头信息也需要重新分配，所以需要一块新的内存
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">newsh</span> <span class="o">=</span> <span class="n">s_malloc</span><span class="p">(</span><span class="n">hdrlen</span><span class="o">+</span><span class="n">newlen</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">newsh</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// 把数据拷贝过去，释放旧的内存
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">memcpy</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">newsh</span><span class="o">+</span><span class="n">hdrlen</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">len</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">s_free</span><span class="p">(</span><span class="n">sh</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">s</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="n">newsh</span><span class="o">+</span><span class="n">hdrlen</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">type</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// 设置长度字段
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">sdssetlen</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 设置新的 alloc
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">sdssetalloc</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">newlen</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">s</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div>
+    </article>
+    <section class="article-series">
+      <h2 class="series-title"><a href="/series/redis-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="fas fa-book"></i>&nbsp;redis 源码分析</a></h2>
+      <ol reversed="reversed" class="series">
+        <li class="active">redis sds</li>
+      </ol>
+    </section>
+
+    
+
+
+    <ul class="pager article-pager">
+      <li class="pager-newer pager-noitem">&lt; Newer</li>
+      <li class="pager-older">
+        <a href="/posts/frame-or-noframe/" data-toggle="tooltip" data-placement="top" title="框架用不用？">Older &gt;</a>
+      </li>
+    </ul>
+  </div>
+
+
+<div class="site-footer">
+  <div class="copyright">&copy; Copyright 2017 Foo Bar</div>
+  <ul class="site-footer-items">
+    <li class="site-footer-item-about"><a href="/about/" title="About">About</a></li>
+  </ul>
+  <div class="powerdby">
+    Powered by <a href="https://gohugo.io/">Hugo</a> and <a href="https://github.com/taikii/whiteplain">Whiteplain</a>
+  </div>
+</div>
+
+
+</body>
+</html>
