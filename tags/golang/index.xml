@@ -6,7 +6,7 @@
     <description>Recent content in golang on 雾雨七辰</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>ja</language>
-    <copyright>&amp;copy; Copyright 2017 Foo Bar</copyright>
+    <copyright>&amp;copy; Copyright 2017 雾雨七辰</copyright>
     <lastBuildDate>Sat, 30 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/tags/golang/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>FIFO 环形队列</title>
