@@ -1,470 +1,399 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-  <title>一致性哈希 - 雾雨七辰</title>
-  <meta property="og:title" content="一致性哈希 - 雾雨七辰" />
-  <meta name="twitter:title" content="一致性哈希 - 雾雨七辰" />
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  
+    
+  <title>一致性哈希 | 雾雨七辰</title>
+  <meta name="author" content="Comien">
   <meta name="description" content="go-zero 一致性哈希分析">
-  <meta property="og:description" content="go-zero 一致性哈希分析">
-  <meta name="twitter:description" content="go-zero 一致性哈希分析">
-  <meta name="author" content="雾雨七辰"/>
-  <meta property="og:site_name" content="雾雨七辰" />
-  <meta property="og:url" content="https://comien.github.io/posts/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/" />
-  <meta property="og:type" content="article" />
-  <meta name="twitter:card" content="summary" />
-  <meta name="generator" content="Hugo 0.111.3">
-  <link rel="stylesheet" href="/css/style.css" media="all" />
-  <link rel="stylesheet" href="/css/style-dark.css" media="all and (prefers-color-scheme: dark)" />
+  <meta name="keywords" content="blog,developer,personal">
 
-  <link rel="stylesheet" href="/css/syntax.css" media="all" />
-  <link rel="stylesheet" href="/css/custom.css" media="all" />
+  <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="一致性哈希"/>
+<meta name="twitter:description" content="go-zero 一致性哈希分析"/>
 
-  <script src="/js/script.js"></script>
-  <script src="/js/custom.js"></script>
-  <script defer src="/js/fontawesome.js"></script>
+  <meta property="og:title" content="一致性哈希" />
+<meta property="og:description" content="go-zero 一致性哈希分析" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://comien.github.io/posts/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-07-17T00:00:00+00:00" />
+<meta property="article:modified_time" content="2022-07-17T00:00:00+00:00" />
+<meta property="og:see_also" content="https://comien.github.io/posts/redis-hash-table/" /><meta property="og:see_also" content="https://comien.github.io/posts/redis-sds/" /><meta property="og:see_also" content="https://comien.github.io/posts/fifo/" /><meta property="og:see_also" content="https://comien.github.io/posts/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" /><meta property="og:see_also" content="https://comien.github.io/posts/go-cron/" />
+
+
+  <link rel="stylesheet" href="/css/bootstrap.min.css"  crossorigin="anonymous">
+  
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/css/all.min.css" rel="stylesheet" type="text/css">
+
+  <link rel="stylesheet" href="/sass/main.css">
+
+  <link rel="stylesheet" href="/zoomjs/zoom.min.css">
+
+  <script src=/js/lazysizes.min.js></script>
+
+  
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  
+
 </head>
 
-<body>
 
-<header class="site-header">
-  <nav class="site-navi">
-    <h1 class="site-title"><a href="/">雾雨七辰</a></h1>
-    <ul class="site-navi-items">
-      <li class="site-navi-item-categories"><a href="/categories/" title="分类">分类</a></li>
-      <li class="site-navi-item-tags"><a href="/tags/" title="标签">标签</a></li>
-      <li class="site-navi-item-archives"><a href="/archives/" title="归档">归档</a></li>
-      <li class="site-navi-item-about"><a href="/about/" title="关于我">关于我</a></li>
-    </ul>
-  </nav>
-</header>
-<hr class="site-header-bottom">
 
-  <div class="main" role="main">
-    <article class="article">
-      
-      <p class="article-title-series"><a href="/series/go-zero-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">go-zero 源码分析</a>&nbsp;/</p>
-      <h1 class="article-title">一致性哈希</h1>
-      
-      <hr class="article-title-bottom">
-      <ul class="article-meta">
-        <li class="article-meta-date"><time>July 17, 2022</time></li>
-        <li class="article-meta-categories">
-          <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
-            <i class="fas fa-folder"></i>
-            源码分析
-          </a>&nbsp;
-        </li>
-        <li class="article-meta-tags">
-          <a href="/tags/golang/">
-            <i class="fas fa-tag"></i>
-            golang
-          </a>&nbsp;
-        </li>
-        <li class="article-meta-tags">
-          <a href="/tags/go-zero/">
-            <i class="fas fa-tag"></i>
-            go-zero
-          </a>&nbsp;
-        </li>
-        <li class="article-meta-tags">
-          <a href="/tags/%E7%AE%97%E6%B3%95/">
-            <i class="fas fa-tag"></i>
-            算法
-          </a>&nbsp;
-        </li>
-      </ul>
-      
-<aside class="toc">
-  <nav id="TableOfContents">
-  <ul>
-    <li>
-      <ul>
-        <li><a href="#hash-取模">hash 取模</a></li>
-        <li><a href="#一致性哈希">一致性哈希</a></li>
-      </ul>
-    </li>
-  </ul>
+<body ontouchstart="">
+  
+  
+  <nav class="navbar navbar-default navbar-custom navbar-fixed-top invert">
+  <div class="container-fluid">
+    
+    <div class="navbar-header page-scroll">
+      <button type="button" class="navbar-toggle">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="https://comien.github.io/">雾雨七辰</a>
+    </div>
+    
+    <div id="huxblog_navbar">
+      <div class="navbar-collapse">
+        <ul class="nav navbar-nav navbar-right">
+          
+          <li><a href="/" title="首页">首页</a></li>
+          
+          <li><a href="/archive/" title="归档">归档</a></li>
+          
+          <li><a href="/series/code-analyse" title="源码分析">源码分析</a></li>
+          
+          <li><a href="/about/" title="关于我">关于我</a></li>
+          
+          <li><a href="https://github.com/comien/" title="Github">Github</a></li>
+          
+
+          <li class="search-icon">
+            <a href="javascript:void(0)">
+              <i class="fa fa-search"></i>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+  </div>
+  
 </nav>
-</aside>
-      <p>分析 go-zero 中的一致性哈希。源码在 core/hash/consistenthash.go</p>
-<h3 id="hash-取模">hash 取模</h3>
-<p>常见的负载均衡算法 hash 取模，是把 hash 通过取模，分布在区间内<br>
+<script>
+  
+  
+  
+  var $body = document.body;
+  var $toggle = document.querySelector(".navbar-toggle");
+  var $navbar = document.querySelector("#huxblog_navbar");
+  var $collapse = document.querySelector(".navbar-collapse");
+
+  var __HuxNav__ = {
+    close: function () {
+      $navbar.className = " ";
+      
+      setTimeout(function () {
+        
+        if ($navbar.className.indexOf("in") < 0) {
+          $collapse.style.height = "0px";
+        }
+      }, 400);
+    },
+    open: function () {
+      $collapse.style.height = "auto";
+      $navbar.className += " in";
+    },
+  };
+
+  
+  $toggle.addEventListener("click", function (e) {
+    if ($navbar.className.indexOf("in") > 0) {
+      __HuxNav__.close();
+    } else {
+      __HuxNav__.open();
+    }
+  });
+
+  
+
+  document.addEventListener("click", function (e) {
+    if (e.target == $toggle) return;
+    if (e.target.className == "icon-bar") return;
+    __HuxNav__.close();
+  });
+</script>
+  
+<div class="search-page">
+  <div class="search-icon-close-container">
+    <span class="search-icon-close">
+      <i class="fa fa-chevron-down"></i>
+    </span>
+  </div>
+  <div class="search-main container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <form></form>
+        <input type="text" id="search-input" placeholder="$ grep...">
+        </form>
+        <div id="search-results" class="mini-post-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  
+  
+
+
+<style type="text/css">
+  header.intro-header {
+    position: relative;
+    background-image: url('');
+  }
+</style>
+
+<header class="intro-header style-text">
+
+  <div class="header-mask"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <div class="post-heading">
+          <div class="tags">
+            
+            <a class="tag" href="/tags/golang/" title="golang">golang</a>
+            
+            <a class="tag" href="/tags/go-zero/" title="go-zero">go-zero</a>
+            
+            <a class="tag" href="/tags/%E7%AE%97%E6%B3%95/" title="算法">算法</a>
+            
+          </div>
+          <h1>一致性哈希</h1>
+          <h2 class="subheading"></h2>
+          <span class="meta">
+            Posted by  comien 
+            on Sun, Jul 17, 2022
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+
+  
+
+
+<article>
+  <div class="container">
+    <div class="row">
+
+      
+      <div class="
+              col-lg-8 col-lg-offset-2
+              col-md-10 col-md-offset-1
+              post-container">
+        <p>分析 go-zero 中的一致性哈希。源码在 core/hash/consistenthash.go</p>
+<h3 id="hash-取模">hash 取模<a class="anchorjs-link" href="#hash-%e5%8f%96%e6%a8%a1"></a></h3><p>常见的负载均衡算法 hash 取模，是把 hash 通过取模，分布在区间内<br>
 缺点：对于 hash 节点的删除和添加操作，影响范围太大了，大量的请求无法命中需要重新加载。<br>
 而一致性哈希算法，把 hash 映射到 2^32-1 中，而且添加了虚拟节点，对于节点的删除和添加操作，影响的节点数量少。</p>
-<h3 id="一致性哈希">一致性哈希</h3>
-<ul>
+<h3 id="一致性哈希">一致性哈希<a class="anchorjs-link" href="#%e4%b8%80%e8%87%b4%e6%80%a7%e5%93%88%e5%b8%8c"></a></h3><ul>
 <li>hash 算法</li>
 </ul>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="c1">// Hash returns the hash value of data.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">Hash</span><span class="p">(</span><span class="nx">data</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">)</span> <span class="kt">uint64</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">   <span class="k">return</span> <span class="nx">murmur3</span><span class="p">.</span><span class="nf">Sum64</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="c1">// hash 分布在 2^64-1
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span><span style="color:#6272a4">// Hash returns the hash value of data.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">Hash</span>(data []<span style="color:#8be9fd">byte</span>) <span style="color:#8be9fd">uint64</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>   <span style="color:#ff79c6">return</span> murmur3.<span style="color:#50fa7b">Sum64</span>(data) <span style="color:#6272a4">// hash 分布在 2^64-1
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span><span style="color:#6272a4"></span>}
+</span></span></code></pre></div><ul>
 <li>定义</li>
 </ul>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
-</span><span class="lnt">6
-</span><span class="lnt">7
-</span><span class="lnt">8
-</span><span class="lnt">9
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">ConsistentHash</span> <span class="kd">struct</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">      <span class="nx">hashFunc</span> <span class="nx">Func</span> <span class="c1">// hash 算法
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nx">replicas</span> <span class="kt">int</span> <span class="c1">// 虚拟节点数量
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nx">keys</span>     <span class="p">[]</span><span class="kt">uint64</span> <span class="c1">// 虚拟节点
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nx">ring</span>     <span class="kd">map</span><span class="p">[</span><span class="kt">uint64</span><span class="p">][]</span><span class="kd">interface</span><span class="p">{}</span> <span class="c1">// 虚拟节点映射的实际节点
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nx">nodes</span>    <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">lang</span><span class="p">.</span><span class="nx">PlaceholderType</span> <span class="c1">// 真实节点的字符串列表，出现hash碰撞，会存在多个
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nx">lock</span>     <span class="nx">sync</span><span class="p">.</span><span class="nx">RWMutex</span>
-</span></span><span class="line"><span class="cl">   <span class="p">}</span>
-</span></span><span class="line"><span class="cl"><span class="p">)</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span><span class="lnt">14
-</span><span class="lnt">15
-</span><span class="lnt">16
-</span><span class="lnt">17
-</span><span class="lnt">18
-</span><span class="lnt">19
-</span><span class="lnt">20
-</span><span class="lnt">21
-</span><span class="lnt">22
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// NewConsistentHash returns a ConsistentHash.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">NewConsistentHash</span><span class="p">()</span> <span class="o">*</span><span class="nx">ConsistentHash</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">   <span class="k">return</span> <span class="nf">NewCustomConsistentHash</span><span class="p">(</span><span class="nx">minReplicas</span><span class="p">,</span> <span class="nx">Hash</span><span class="p">)</span> <span class="c1">// hash 算法
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="c1">// NewCustomConsistentHash returns a ConsistentHash with given replicas and hash func.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">NewCustomConsistentHash</span><span class="p">(</span><span class="nx">replicas</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">fn</span> <span class="nx">Func</span><span class="p">)</span> <span class="o">*</span><span class="nx">ConsistentHash</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">   <span class="k">if</span> <span class="nx">replicas</span> <span class="p">&lt;</span> <span class="nx">minReplicas</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">      <span class="nx">replicas</span> <span class="p">=</span> <span class="nx">minReplicas</span>
-</span></span><span class="line"><span class="cl">   <span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">   <span class="k">if</span> <span class="nx">fn</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">      <span class="nx">fn</span> <span class="p">=</span> <span class="nx">Hash</span>
-</span></span><span class="line"><span class="cl">   <span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">   <span class="k">return</span> <span class="o">&amp;</span><span class="nx">ConsistentHash</span><span class="p">{</span>
-</span></span><span class="line"><span class="cl">      <span class="nx">hashFunc</span><span class="p">:</span> <span class="nx">fn</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">      <span class="nx">replicas</span><span class="p">:</span> <span class="nx">replicas</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">      <span class="nx">ring</span><span class="p">:</span>     <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">uint64</span><span class="p">][]</span><span class="kd">interface</span><span class="p">{}),</span>
-</span></span><span class="line"><span class="cl">      <span class="nx">nodes</span><span class="p">:</span>    <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="nx">lang</span><span class="p">.</span><span class="nx">PlaceholderType</span><span class="p">),</span>
-</span></span><span class="line"><span class="cl">   <span class="p">}</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>ConsistentHash <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>      hashFunc Func <span style="color:#6272a4">// hash 算法
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span><span style="color:#6272a4"></span>      replicas <span style="color:#8be9fd">int</span> <span style="color:#6272a4">// 虚拟节点数量
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span><span style="color:#6272a4"></span>      keys     []<span style="color:#8be9fd">uint64</span> <span style="color:#6272a4">// 虚拟节点
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span><span style="color:#6272a4"></span>      ring     <span style="color:#8be9fd;font-style:italic">map</span>[<span style="color:#8be9fd">uint64</span>][]<span style="color:#8be9fd;font-style:italic">interface</span>{} <span style="color:#6272a4">// 虚拟节点映射的实际节点
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span><span style="color:#6272a4"></span>      nodes    <span style="color:#8be9fd;font-style:italic">map</span>[<span style="color:#8be9fd">string</span>]lang.PlaceholderType <span style="color:#6272a4">// 真实节点的字符串列表，出现hash碰撞，会存在多个
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span><span style="color:#6272a4"></span>      lock     sync.RWMutex
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>   }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#6272a4">// NewConsistentHash returns a ConsistentHash.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">NewConsistentHash</span>() <span style="color:#ff79c6">*</span>ConsistentHash {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>   <span style="color:#ff79c6">return</span> <span style="color:#50fa7b">NewCustomConsistentHash</span>(minReplicas, Hash) <span style="color:#6272a4">// hash 算法
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span><span style="color:#6272a4"></span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span><span style="color:#6272a4">// NewCustomConsistentHash returns a ConsistentHash with given replicas and hash func.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">NewCustomConsistentHash</span>(replicas <span style="color:#8be9fd">int</span>, fn Func) <span style="color:#ff79c6">*</span>ConsistentHash {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>   <span style="color:#ff79c6">if</span> replicas &lt; minReplicas {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>      replicas = minReplicas
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>   }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>   <span style="color:#ff79c6">if</span> fn <span style="color:#ff79c6">==</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>      fn = Hash
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>   }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>   <span style="color:#ff79c6">return</span> <span style="color:#ff79c6">&amp;</span>ConsistentHash{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>      hashFunc: fn,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>      replicas: replicas,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>      ring:     <span style="color:#8be9fd;font-style:italic">make</span>(<span style="color:#8be9fd;font-style:italic">map</span>[<span style="color:#8be9fd">uint64</span>][]<span style="color:#8be9fd;font-style:italic">interface</span>{}),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>      nodes:    <span style="color:#8be9fd;font-style:italic">make</span>(<span style="color:#8be9fd;font-style:italic">map</span>[<span style="color:#8be9fd">string</span>]lang.PlaceholderType),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>   }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>}
+</span></span></code></pre></div><ul>
 <li>添加节点</li>
 </ul>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span><span class="lnt">14
-</span><span class="lnt">15
-</span><span class="lnt">16
-</span><span class="lnt">17
-</span><span class="lnt">18
-</span><span class="lnt">19
-</span><span class="lnt">20
-</span><span class="lnt">21
-</span><span class="lnt">22
-</span><span class="lnt">23
-</span><span class="lnt">24
-</span><span class="lnt">25
-</span><span class="lnt">26
-</span><span class="lnt">27
-</span><span class="lnt">28
-</span><span class="lnt">29
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">h</span> <span class="o">*</span><span class="nx">ConsistentHash</span><span class="p">)</span> <span class="nf">Add</span><span class="p">(</span><span class="nx">node</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">   <span class="nx">h</span><span class="p">.</span><span class="nf">AddWithReplicas</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">h</span><span class="p">.</span><span class="nx">replicas</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="c1">// AddWithReplicas adds the node with the number of replicas,
-</span></span></span><span class="line"><span class="cl"><span class="c1">// replicas will be truncated to h.replicas if it&#39;s larger than h.replicas,
-</span></span></span><span class="line"><span class="cl"><span class="c1">// the later call will overwrite the replicas of the former calls.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">h</span> <span class="o">*</span><span class="nx">ConsistentHash</span><span class="p">)</span> <span class="nf">AddWithReplicas</span><span class="p">(</span><span class="nx">node</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">replicas</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">   <span class="nx">h</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">   <span class="k">if</span> <span class="nx">replicas</span> <span class="p">&gt;</span> <span class="nx">h</span><span class="p">.</span><span class="nx">replicas</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">      <span class="nx">replicas</span> <span class="p">=</span> <span class="nx">h</span><span class="p">.</span><span class="nx">replicas</span>
-</span></span><span class="line"><span class="cl">   <span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">   <span class="nx">nodeRepr</span> <span class="o">:=</span> <span class="nf">repr</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span> <span class="c1">// 真实节点字符串
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>   <span class="nx">h</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">   <span class="k">defer</span> <span class="nx">h</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">   <span class="nx">h</span><span class="p">.</span><span class="nf">addNode</span><span class="p">(</span><span class="nx">nodeRepr</span><span class="p">)</span> <span class="c1">// 添加真实节点
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
-</span></span><span class="line"><span class="cl">   <span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">replicas</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">      <span class="nx">hash</span> <span class="o">:=</span> <span class="nx">h</span><span class="p">.</span><span class="nf">hashFunc</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">nodeRepr</span> <span class="o">+</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">Itoa</span><span class="p">(</span><span class="nx">i</span><span class="p">)))</span> <span class="c1">// 计算每个虚拟节点的 hash
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nx">h</span><span class="p">.</span><span class="nx">keys</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">,</span> <span class="nx">hash</span><span class="p">)</span> <span class="c1">// 虚拟节点列表
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nx">h</span><span class="p">.</span><span class="nx">ring</span><span class="p">[</span><span class="nx">hash</span><span class="p">]</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">ring</span><span class="p">[</span><span class="nx">hash</span><span class="p">],</span> <span class="nx">node</span><span class="p">)</span> <span class="c1">// 虚拟节点的hash 映射节点
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>   <span class="p">}</span>
-</span></span><span class="line"><span class="cl">   <span class="c1">// 对keys排序
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>   <span class="nx">sort</span><span class="p">.</span><span class="nf">Slice</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">,</span> <span class="kd">func</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">j</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">      <span class="k">return</span> <span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">&lt;</span> <span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">[</span><span class="nx">j</span><span class="p">]</span>
-</span></span><span class="line"><span class="cl">   <span class="p">})</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">func</span> (h <span style="color:#ff79c6">*</span>ConsistentHash) <span style="color:#50fa7b">Add</span>(node <span style="color:#8be9fd;font-style:italic">interface</span>{}) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>   h.<span style="color:#50fa7b">AddWithReplicas</span>(node, h.replicas)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#6272a4">// AddWithReplicas adds the node with the number of replicas,
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span><span style="color:#6272a4">// replicas will be truncated to h.replicas if it&#39;s larger than h.replicas,
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span><span style="color:#6272a4">// the later call will overwrite the replicas of the former calls.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (h <span style="color:#ff79c6">*</span>ConsistentHash) <span style="color:#50fa7b">AddWithReplicas</span>(node <span style="color:#8be9fd;font-style:italic">interface</span>{}, replicas <span style="color:#8be9fd">int</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>   h.<span style="color:#50fa7b">Remove</span>(node)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>   <span style="color:#ff79c6">if</span> replicas &gt; h.replicas {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>      replicas = h.replicas
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>   }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>   nodeRepr <span style="color:#ff79c6">:=</span> <span style="color:#50fa7b">repr</span>(node) <span style="color:#6272a4">// 真实节点字符串
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span><span style="color:#6272a4"></span>   h.lock.<span style="color:#50fa7b">Lock</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>   <span style="color:#ff79c6">defer</span> h.lock.<span style="color:#50fa7b">Unlock</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>   h.<span style="color:#50fa7b">addNode</span>(nodeRepr) <span style="color:#6272a4">// 添加真实节点
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>   <span style="color:#ff79c6">for</span> i <span style="color:#ff79c6">:=</span> <span style="color:#bd93f9">0</span>; i &lt; replicas; i<span style="color:#ff79c6">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>      hash <span style="color:#ff79c6">:=</span> h.<span style="color:#50fa7b">hashFunc</span>([]<span style="color:#8be9fd;font-style:italic">byte</span>(nodeRepr <span style="color:#ff79c6">+</span> strconv.<span style="color:#50fa7b">Itoa</span>(i))) <span style="color:#6272a4">// 计算每个虚拟节点的 hash
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span><span style="color:#6272a4"></span>      h.keys = <span style="color:#8be9fd;font-style:italic">append</span>(h.keys, hash) <span style="color:#6272a4">// 虚拟节点列表
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span><span style="color:#6272a4"></span>      h.ring[hash] = <span style="color:#8be9fd;font-style:italic">append</span>(h.ring[hash], node) <span style="color:#6272a4">// 虚拟节点的hash 映射节点
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span><span style="color:#6272a4"></span>   }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>   <span style="color:#6272a4">// 对keys排序
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span><span style="color:#6272a4"></span>   sort.<span style="color:#50fa7b">Slice</span>(h.keys, <span style="color:#8be9fd;font-style:italic">func</span>(i, j <span style="color:#8be9fd">int</span>) <span style="color:#8be9fd">bool</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>      <span style="color:#ff79c6">return</span> h.keys[i] &lt; h.keys[j]
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>   })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>}
+</span></span></code></pre></div><ul>
 <li>权重添加节点</li>
 </ul>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
-</span><span class="lnt">6
-</span><span class="lnt">7
-</span><span class="lnt">8
-</span><span class="lnt">9
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="c1">// AddWithWeight adds the node with weight, the weight can be 1 to 100, indicates the percent,
-</span></span></span><span class="line"><span class="cl"><span class="c1">// the later call will overwrite the replicas of the former calls.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">h</span> <span class="o">*</span><span class="nx">ConsistentHash</span><span class="p">)</span> <span class="nf">AddWithWeight</span><span class="p">(</span><span class="nx">node</span> <span class="kd">interface</span><span class="p">{},</span> <span class="nx">weight</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">   <span class="c1">// don&#39;t need to make sure weight not larger than TopWeight,
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>   <span class="c1">// because AddWithReplicas makes sure replicas cannot be larger than h.replicas
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>   <span class="nx">replicas</span> <span class="o">:=</span> <span class="nx">h</span><span class="p">.</span><span class="nx">replicas</span> <span class="o">*</span> <span class="nx">weight</span> <span class="o">/</span> <span class="nx">TopWeight</span>
-</span></span><span class="line"><span class="cl">   <span class="nx">h</span><span class="p">.</span><span class="nf">AddWithReplicas</span><span class="p">(</span><span class="nx">node</span><span class="p">,</span> <span class="nx">replicas</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span><span style="color:#6272a4">// AddWithWeight adds the node with weight, the weight can be 1 to 100, indicates the percent,
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span><span style="color:#6272a4">// the later call will overwrite the replicas of the former calls.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (h <span style="color:#ff79c6">*</span>ConsistentHash) <span style="color:#50fa7b">AddWithWeight</span>(node <span style="color:#8be9fd;font-style:italic">interface</span>{}, weight <span style="color:#8be9fd">int</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>   <span style="color:#6272a4">// don&#39;t need to make sure weight not larger than TopWeight,
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span><span style="color:#6272a4"></span>   <span style="color:#6272a4">// because AddWithReplicas makes sure replicas cannot be larger than h.replicas
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span><span style="color:#6272a4"></span>   replicas <span style="color:#ff79c6">:=</span> h.replicas <span style="color:#ff79c6">*</span> weight <span style="color:#ff79c6">/</span> TopWeight
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span>   h.<span style="color:#50fa7b">AddWithReplicas</span>(node, replicas)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>}
+</span></span></code></pre></div><ul>
 <li>删除节点</li>
 </ul>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span><span class="lnt">14
-</span><span class="lnt">15
-</span><span class="lnt">16
-</span><span class="lnt">17
-</span><span class="lnt">18
-</span><span class="lnt">19
-</span><span class="lnt">20
-</span><span class="lnt">21
-</span><span class="lnt">22
-</span><span class="lnt">23
-</span><span class="lnt">24
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Remove removes the given node from h.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">h</span> <span class="o">*</span><span class="nx">ConsistentHash</span><span class="p">)</span> <span class="nf">Remove</span><span class="p">(</span><span class="nx">node</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">   <span class="nx">nodeRepr</span> <span class="o">:=</span> <span class="nf">repr</span><span class="p">(</span><span class="nx">node</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">   <span class="nx">h</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">   <span class="k">defer</span> <span class="nx">h</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">   <span class="k">if</span> <span class="p">!</span><span class="nx">h</span><span class="p">.</span><span class="nf">containsNode</span><span class="p">(</span><span class="nx">nodeRepr</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// nodes 中是否包含
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="k">return</span>
-</span></span><span class="line"><span class="cl">   <span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">   <span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">h</span><span class="p">.</span><span class="nx">replicas</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">      <span class="nx">hash</span> <span class="o">:=</span> <span class="nx">h</span><span class="p">.</span><span class="nf">hashFunc</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">nodeRepr</span> <span class="o">+</span> <span class="nx">strconv</span><span class="p">.</span><span class="nf">Itoa</span><span class="p">(</span><span class="nx">i</span><span class="p">)))</span> <span class="c1">// 每个虚拟节点的hash
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nx">index</span> <span class="o">:=</span> <span class="nx">sort</span><span class="p">.</span><span class="nf">Search</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">),</span> <span class="kd">func</span><span class="p">(</span><span class="nx">i</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span> <span class="c1">// 二分搜索，查询 &gt;= 该 hash 的索引
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>         <span class="k">return</span> <span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="nx">hash</span>
-</span></span><span class="line"><span class="cl">      <span class="p">})</span>
-</span></span><span class="line"><span class="cl">      <span class="k">if</span> <span class="nx">index</span> <span class="p">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">[</span><span class="nx">index</span><span class="p">]</span> <span class="o">==</span> <span class="nx">hash</span> <span class="p">{</span> <span class="c1">// keys 中找到该 hash，删除该 hash
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>         <span class="nx">h</span><span class="p">.</span><span class="nx">keys</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">[:</span><span class="nx">index</span><span class="p">],</span> <span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">[</span><span class="nx">index</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span><span class="o">...</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">      <span class="p">}</span>
-</span></span><span class="line"><span class="cl">      <span class="nx">h</span><span class="p">.</span><span class="nf">removeRingNode</span><span class="p">(</span><span class="nx">hash</span><span class="p">,</span> <span class="nx">nodeRepr</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">   <span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">   <span class="nx">h</span><span class="p">.</span><span class="nf">removeNode</span><span class="p">(</span><span class="nx">nodeRepr</span><span class="p">)</span> <span class="c1">// 删除节点
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span><span class="lnt">14
-</span><span class="lnt">15
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">h</span> <span class="o">*</span><span class="nx">ConsistentHash</span><span class="p">)</span> <span class="nf">removeRingNode</span><span class="p">(</span><span class="nx">hash</span> <span class="kt">uint64</span><span class="p">,</span> <span class="nx">nodeRepr</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">   <span class="k">if</span> <span class="nx">nodes</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">h</span><span class="p">.</span><span class="nx">ring</span><span class="p">[</span><span class="nx">hash</span><span class="p">];</span> <span class="nx">ok</span> <span class="p">{</span> <span class="c1">// 查询 hash 映射
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nx">newNodes</span> <span class="o">:=</span> <span class="nx">nodes</span><span class="p">[:</span><span class="mi">0</span><span class="p">]</span> <span class="c1">// 创建相同的slice，长度为0
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">x</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">nodes</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">         <span class="k">if</span> <span class="nf">repr</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span> <span class="o">!=</span> <span class="nx">nodeRepr</span> <span class="p">{</span> <span class="c1">// 非删除的虚拟节点加入 nowNodes
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="nx">newNodes</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">newNodes</span><span class="p">,</span> <span class="nx">x</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">         <span class="p">}</span>
-</span></span><span class="line"><span class="cl">      <span class="p">}</span>
-</span></span><span class="line"><span class="cl">      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">newNodes</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">         <span class="nx">h</span><span class="p">.</span><span class="nx">ring</span><span class="p">[</span><span class="nx">hash</span><span class="p">]</span> <span class="p">=</span> <span class="nx">newNodes</span> <span class="c1">// 非删除的虚拟节点列表放回去，要删除的虚拟节点已经剔除
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">         <span class="nb">delete</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">ring</span><span class="p">,</span> <span class="nx">hash</span><span class="p">)</span> <span class="c1">// 删除该虚拟节点
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="p">}</span>
-</span></span><span class="line"><span class="cl">   <span class="p">}</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">h</span> <span class="o">*</span><span class="nx">ConsistentHash</span><span class="p">)</span> <span class="nf">removeNode</span><span class="p">(</span><span class="nx">nodeRepr</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">   <span class="nb">delete</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">nodes</span><span class="p">,</span> <span class="nx">nodeRepr</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#6272a4">// Remove removes the given node from h.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (h <span style="color:#ff79c6">*</span>ConsistentHash) <span style="color:#50fa7b">Remove</span>(node <span style="color:#8be9fd;font-style:italic">interface</span>{}) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>   nodeRepr <span style="color:#ff79c6">:=</span> <span style="color:#50fa7b">repr</span>(node)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>   h.lock.<span style="color:#50fa7b">Lock</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>   <span style="color:#ff79c6">defer</span> h.lock.<span style="color:#50fa7b">Unlock</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>   <span style="color:#ff79c6">if</span> !h.<span style="color:#50fa7b">containsNode</span>(nodeRepr) { <span style="color:#6272a4">// nodes 中是否包含
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span><span style="color:#6272a4"></span>      <span style="color:#ff79c6">return</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>   }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>   <span style="color:#ff79c6">for</span> i <span style="color:#ff79c6">:=</span> <span style="color:#bd93f9">0</span>; i &lt; h.replicas; i<span style="color:#ff79c6">++</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>      hash <span style="color:#ff79c6">:=</span> h.<span style="color:#50fa7b">hashFunc</span>([]<span style="color:#8be9fd;font-style:italic">byte</span>(nodeRepr <span style="color:#ff79c6">+</span> strconv.<span style="color:#50fa7b">Itoa</span>(i))) <span style="color:#6272a4">// 每个虚拟节点的hash
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#6272a4"></span>      index <span style="color:#ff79c6">:=</span> sort.<span style="color:#50fa7b">Search</span>(<span style="color:#8be9fd;font-style:italic">len</span>(h.keys), <span style="color:#8be9fd;font-style:italic">func</span>(i <span style="color:#8be9fd">int</span>) <span style="color:#8be9fd">bool</span> { <span style="color:#6272a4">// 二分搜索，查询 &gt;= 该 hash 的索引
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span><span style="color:#6272a4"></span>         <span style="color:#ff79c6">return</span> h.keys[i] <span style="color:#ff79c6">&gt;=</span> hash
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>      })
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>      <span style="color:#ff79c6">if</span> index &lt; <span style="color:#8be9fd;font-style:italic">len</span>(h.keys) <span style="color:#ff79c6">&amp;&amp;</span> h.keys[index] <span style="color:#ff79c6">==</span> hash { <span style="color:#6272a4">// keys 中找到该 hash，删除该 hash
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span><span style="color:#6272a4"></span>         h.keys = <span style="color:#8be9fd;font-style:italic">append</span>(h.keys[:index], h.keys[index<span style="color:#ff79c6">+</span><span style="color:#bd93f9">1</span>:]<span style="color:#ff79c6">...</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>      }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>      h.<span style="color:#50fa7b">removeRingNode</span>(hash, nodeRepr)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>   }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>   h.<span style="color:#50fa7b">removeNode</span>(nodeRepr) <span style="color:#6272a4">// 删除节点
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span><span style="color:#6272a4"></span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">func</span> (h <span style="color:#ff79c6">*</span>ConsistentHash) <span style="color:#50fa7b">removeRingNode</span>(hash <span style="color:#8be9fd">uint64</span>, nodeRepr <span style="color:#8be9fd">string</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>   <span style="color:#ff79c6">if</span> nodes, ok <span style="color:#ff79c6">:=</span> h.ring[hash]; ok { <span style="color:#6272a4">// 查询 hash 映射
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#6272a4"></span>      newNodes <span style="color:#ff79c6">:=</span> nodes[:<span style="color:#bd93f9">0</span>] <span style="color:#6272a4">// 创建相同的slice，长度为0
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span><span style="color:#6272a4"></span>      <span style="color:#ff79c6">for</span> _, x <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">range</span> nodes {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>         <span style="color:#ff79c6">if</span> <span style="color:#50fa7b">repr</span>(x) <span style="color:#ff79c6">!=</span> nodeRepr { <span style="color:#6272a4">// 非删除的虚拟节点加入 nowNodes
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span><span style="color:#6272a4"></span>            newNodes = <span style="color:#8be9fd;font-style:italic">append</span>(newNodes, x)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>         }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>      }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>      <span style="color:#ff79c6">if</span> <span style="color:#8be9fd;font-style:italic">len</span>(newNodes) &gt; <span style="color:#bd93f9">0</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>         h.ring[hash] = newNodes <span style="color:#6272a4">// 非删除的虚拟节点列表放回去，要删除的虚拟节点已经剔除
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span><span style="color:#6272a4"></span>      } <span style="color:#ff79c6">else</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>         <span style="color:#8be9fd;font-style:italic">delete</span>(h.ring, hash) <span style="color:#6272a4">// 删除该虚拟节点
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span><span style="color:#6272a4"></span>      }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>   }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>}
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#8be9fd;font-style:italic">func</span> (h <span style="color:#ff79c6">*</span>ConsistentHash) <span style="color:#50fa7b">removeNode</span>(nodeRepr <span style="color:#8be9fd">string</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>   <span style="color:#8be9fd;font-style:italic">delete</span>(h.nodes, nodeRepr)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>}
+</span></span></code></pre></div><ul>
 <li>查询</li>
 </ul>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span><span class="lnt">14
-</span><span class="lnt">15
-</span><span class="lnt">16
-</span><span class="lnt">17
-</span><span class="lnt">18
-</span><span class="lnt">19
-</span><span class="lnt">20
-</span><span class="lnt">21
-</span><span class="lnt">22
-</span><span class="lnt">23
-</span><span class="lnt">24
-</span><span class="lnt">25
-</span><span class="lnt">26
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Get returns the corresponding node from h base on the given v.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">h</span> <span class="o">*</span><span class="nx">ConsistentHash</span><span class="p">)</span> <span class="nf">Get</span><span class="p">(</span><span class="nx">v</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">(</span><span class="kd">interface</span><span class="p">{},</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">   <span class="nx">h</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">RLock</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">   <span class="k">defer</span> <span class="nx">h</span><span class="p">.</span><span class="nx">lock</span><span class="p">.</span><span class="nf">RUnlock</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">   <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">ring</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">      <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">false</span>
-</span></span><span class="line"><span class="cl">   <span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">   <span class="nx">hash</span> <span class="o">:=</span> <span class="nx">h</span><span class="p">.</span><span class="nf">hashFunc</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nf">repr</span><span class="p">(</span><span class="nx">v</span><span class="p">)))</span> <span class="c1">// 取 hash
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>   <span class="nx">index</span> <span class="o">:=</span> <span class="nx">sort</span><span class="p">.</span><span class="nf">Search</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">),</span> <span class="kd">func</span><span class="p">(</span><span class="nx">i</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span> <span class="c1">// 二分搜索 &gt;= hash 的 index
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="k">return</span> <span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="nx">hash</span>
-</span></span><span class="line"><span class="cl">   <span class="p">})</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">)</span> <span class="c1">// index 映射到虚拟节点
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
-</span></span><span class="line"><span class="cl">   <span class="nx">nodes</span> <span class="o">:=</span> <span class="nx">h</span><span class="p">.</span><span class="nx">ring</span><span class="p">[</span><span class="nx">h</span><span class="p">.</span><span class="nx">keys</span><span class="p">[</span><span class="nx">index</span><span class="p">]]</span> <span class="c1">// 获取虚拟节点对应的实际节点列表
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>   <span class="k">switch</span> <span class="nb">len</span><span class="p">(</span><span class="nx">nodes</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">   <span class="k">case</span> <span class="mi">0</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">      <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">false</span>
-</span></span><span class="line"><span class="cl">   <span class="k">case</span> <span class="mi">1</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">      <span class="k">return</span> <span class="nx">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="kc">true</span>
-</span></span><span class="line"><span class="cl">   <span class="k">default</span><span class="p">:</span> <span class="c1">// 存在多个真实节点，重新hash，在其中取一个真实节点
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>      <span class="nx">innerIndex</span> <span class="o">:=</span> <span class="nx">h</span><span class="p">.</span><span class="nf">hashFunc</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nf">innerRepr</span><span class="p">(</span><span class="nx">v</span><span class="p">)))</span>
-</span></span><span class="line"><span class="cl">      <span class="nx">pos</span> <span class="o">:=</span> <span class="nb">int</span><span class="p">(</span><span class="nx">innerIndex</span> <span class="o">%</span> <span class="nb">uint64</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">nodes</span><span class="p">)))</span>
-</span></span><span class="line"><span class="cl">      <span class="k">return</span> <span class="nx">nodes</span><span class="p">[</span><span class="nx">pos</span><span class="p">],</span> <span class="kc">true</span>
-</span></span><span class="line"><span class="cl">   <span class="p">}</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div>
-    </article>
-    <section class="article-series">
-      <h2 class="series-title"><a href="/series/go-zero-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="fas fa-book"></i>&nbsp;go-zero 源码分析</a></h2>
-      <ol reversed="reversed" class="series">
-        <li><a href="/posts/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/">Ring Buffer</a></li>
-        <li><a href="/posts/fifo/">FIFO 环形队列</a></li>
-        <li class="active">一致性哈希</li>
-      </ol>
-    </section>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#6272a4">// Get returns the corresponding node from h base on the given v.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (h <span style="color:#ff79c6">*</span>ConsistentHash) <span style="color:#50fa7b">Get</span>(v <span style="color:#8be9fd;font-style:italic">interface</span>{}) (<span style="color:#8be9fd;font-style:italic">interface</span>{}, <span style="color:#8be9fd">bool</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>   h.lock.<span style="color:#50fa7b">RLock</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>   <span style="color:#ff79c6">defer</span> h.lock.<span style="color:#50fa7b">RUnlock</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>   <span style="color:#ff79c6">if</span> <span style="color:#8be9fd;font-style:italic">len</span>(h.ring) <span style="color:#ff79c6">==</span> <span style="color:#bd93f9">0</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>      <span style="color:#ff79c6">return</span> <span style="color:#ff79c6">nil</span>, <span style="color:#ff79c6">false</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>   }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>   hash <span style="color:#ff79c6">:=</span> h.<span style="color:#50fa7b">hashFunc</span>([]<span style="color:#8be9fd;font-style:italic">byte</span>(<span style="color:#50fa7b">repr</span>(v))) <span style="color:#6272a4">// 取 hash
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span><span style="color:#6272a4"></span>   index <span style="color:#ff79c6">:=</span> sort.<span style="color:#50fa7b">Search</span>(<span style="color:#8be9fd;font-style:italic">len</span>(h.keys), <span style="color:#8be9fd;font-style:italic">func</span>(i <span style="color:#8be9fd">int</span>) <span style="color:#8be9fd">bool</span> { <span style="color:#6272a4">// 二分搜索 &gt;= hash 的 index
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span><span style="color:#6272a4"></span>      <span style="color:#ff79c6">return</span> h.keys[i] <span style="color:#ff79c6">&gt;=</span> hash
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>   }) <span style="color:#ff79c6">%</span> <span style="color:#8be9fd;font-style:italic">len</span>(h.keys) <span style="color:#6272a4">// index 映射到虚拟节点
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>   nodes <span style="color:#ff79c6">:=</span> h.ring[h.keys[index]] <span style="color:#6272a4">// 获取虚拟节点对应的实际节点列表
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span><span style="color:#6272a4"></span>   <span style="color:#ff79c6">switch</span> <span style="color:#8be9fd;font-style:italic">len</span>(nodes) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>   <span style="color:#ff79c6">case</span> <span style="color:#bd93f9">0</span>:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>      <span style="color:#ff79c6">return</span> <span style="color:#ff79c6">nil</span>, <span style="color:#ff79c6">false</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>   <span style="color:#ff79c6">case</span> <span style="color:#bd93f9">1</span>:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>      <span style="color:#ff79c6">return</span> nodes[<span style="color:#bd93f9">0</span>], <span style="color:#ff79c6">true</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>   <span style="color:#ff79c6">default</span>: <span style="color:#6272a4">// 存在多个真实节点，重新hash，在其中取一个真实节点
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span><span style="color:#6272a4"></span>      innerIndex <span style="color:#ff79c6">:=</span> h.<span style="color:#50fa7b">hashFunc</span>([]<span style="color:#8be9fd;font-style:italic">byte</span>(<span style="color:#50fa7b">innerRepr</span>(v)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>      pos <span style="color:#ff79c6">:=</span> <span style="color:#8be9fd;font-style:italic">int</span>(innerIndex <span style="color:#ff79c6">%</span> <span style="color:#8be9fd;font-style:italic">uint64</span>(<span style="color:#8be9fd;font-style:italic">len</span>(nodes)))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>      <span style="color:#ff79c6">return</span> nodes[pos], <span style="color:#ff79c6">true</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>   }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>}
+</span></span></code></pre></div>
 
-    
+        <hr style="visibility: hidden;" />
+        <ul class="pager">
+          
+          <li class="previous">
+            <a href="/posts/go-cron/" data-toggle="tooltip" data-placement="top" title="go-cron 源码分析">
+              Previous<br>
+              <span>go-cron 源码分析</span>
+            </a>
+          </li>
+          
+          
+          <li class="next">
+            <a href="/posts/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" data-toggle="tooltip" data-placement="top" title="Ring Buffer">
+              Next<br>
+              <span>Ring Buffer</span>
+            </a>
+          </li>
+          
+        </ul>
+        <hr style="visibility: hidden;" />
 
-    <div class="disqus-comments">
-      <div id="disqus_thread"></div>
+        
+        
+<div id="disqus_thread"></div>
 <script type="application/javascript">
     window.disqus_config = function () {
     
@@ -484,29 +413,207 @@
 </script>
 <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 <a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+
+
+
+
+
+      </div>
+
+      
+      
+      
+      <div class="
+              col-lg-2 col-lg-offset-0
+              visible-lg-block
+              sidebar-container
+              catalog-container">
+        <div class="side-catalog">
+          <hr class="hidden-sm hidden-xs">
+          <h5>
+            <a class="catalog-toggle" href="#">CATALOG</a>
+          </h5>
+          <ul class="catalog-body"></ul>
+        </div>
+      </div>
+      
+      
+      <div class="
+              col-lg-8 col-lg-offset-2
+              col-md-10 col-md-offset-1
+              sidebar-container">
+
+        
+        
+        <section>
+  
+  
+  <hr class="hidden-sm hidden-xs">
+  
+  <h5>FEATURED TAGS</h5>
+  <div class="tags">
+    
+    <a href="/tags/c/">c</a>
+    
+    <a href="/tags/go-cron/">go-cron</a>
+    
+    <a href="/tags/go-zero/">go-zero</a>
+    
+    <a href="/tags/golang/">golang</a>
+    
+    <a href="/tags/index/">index</a>
+    
+    <a href="/tags/redis/">redis</a>
+    
+    <a href="/tags/%E5%88%9B%E5%BB%BA%E5%9E%8B/">创建型</a>
+    
+    <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+    
+    <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+    
+    <a href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="/tags/%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99/">设计原则</a>
+    
+  </div>
+</section>
+
+        
+        
+
+<hr>
+<h5>FRIENDS</h5>
+<ul class="list-inline">
+  
+  <li><a href="" target="_blank"></a></li>
+  
+  <li><a href="" target="_blank"></a></li>
+  
+</ul>
+
+      </div>
     </div>
-
-    <ul class="pager article-pager">
-      <li class="pager-newer">
-          <a href="/posts/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" data-toggle="tooltip" data-placement="top" title="Ring Buffer">&lt; 上一篇</a>
-      </li>
-      <li class="pager-older">
-        <a href="/posts/go-cron/" data-toggle="tooltip" data-placement="top" title="go-cron 源码分析">下一篇 &gt;</a>
-      </li>
-    </ul>
   </div>
+</article>
 
 
-<div class="site-footer">
-  <div class="copyright">&copy; Copyright 2017 雾雨七辰</div>
-  <ul class="site-footer-items">
-    <li class="site-footer-item-about"><a href="/about/" title="关于我">关于我</a></li>
-  </ul>
-  <div class="powerdby">
-    Powered by <a href="https://gohugo.io/">Hugo</a>
+
+  
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        
+        <ul class="list-inline text-center">
+
+<li>
+  <a href="https://github.com/comien" target="_blank">
+    <span class="fa-stack fa-lg">
+      <i class="fa fa-circle fa-stack-2x"></i>
+      <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+    </span>
+  </a>
+</li>
+
+
+<li>
+  <a href="/index.xml" target="_blank">
+    <span class="fa-stack fa-lg">
+      <i class="fa fa-circle fa-stack-2x"></i>
+      <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+    </span>
+  </a>
+</li></ul>
+
+        <p class="copyright text-muted">
+          Copyright &copy; 雾雨七辰 2023  
+          <br>
+          Powered by <a href="https://gohugo.io">Hugo</a>
+        </p>
+      </div>
+    </div>
   </div>
-</div>
+</footer>
 
+<script src=/js/jquery.min.js></script>
+<script src=/js/bootstrap.min.js crossorigin="anonymous"></script>
+
+
+
+<script src="/js/hux-blog.min.c4ea77041cd3edbfc8b2622cd887a9a5d8760a4162d14489e36d2a3fa4c90172.js"></script>
+
+
+<script src=/js/simple-jekyll-search.min.js></script>
+
+
+<script src="/js/search.min.53bce5da475b4d362500e5ce5dddfa22e20e1b9018777411d2020b4b839c9310.js"></script>
+
+
+
+
+
+
+<script type="text/javascript">
+  function generateCatalog(selector) {
+    _containerSelector = 'div.post-container'
+    
+    var P = $(_containerSelector), a, n, t, l, i, c;
+    a = P.find('h1,h2,h3,h4');
+    
+    $(selector).html('')
+    
+    a.each(function () {
+      n = $(this).prop('tagName').toLowerCase();
+      i = "#" + $(this).prop('id');
+      t = $(this).text();
+      c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
+      l = $('<li class="' + n + '_nav"></li>').append(c);
+      $(selector).append(l);
+    });
+    return true;
+  }
+
+  generateCatalog(".catalog-body");
+
+  
+  $(".catalog-toggle").click((function (e) {
+    e.preventDefault();
+    $('.side-catalog').toggleClass("fold")
+  }))
+</script>
+
+
+<script type="text/javascript" src='/js/jquery.nav.min.ade6bde8f9fcc6a4b40852cb892e9f5912340ab8fe1305149d917fdd16fffd8d.js'></script>
+<script>
+   $(document).ready( function () {
+    $('.catalog-body').onePageNav({
+      currentClass: "active",
+      changeHash: !1,
+      easing: "swing",
+      filter: "",
+      scrollSpeed: 700,
+      scrollOffset: 0,
+      scrollThreshold: .2,
+      begin: null,
+      end: null,
+      scrollChange: null,
+      padding: 80
+    });
+  });
+</script>
+
+
+
+
+
+
+
+
+
+<script src="/zoomjs/zoom.min.js"></script>
 
 </body>
+
 </html>

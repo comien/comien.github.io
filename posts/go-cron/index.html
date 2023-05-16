@@ -1,606 +1,450 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-  <title>go-cron 源码分析 - 雾雨七辰</title>
-  <meta property="og:title" content="go-cron 源码分析 - 雾雨七辰" />
-  <meta name="twitter:title" content="go-cron 源码分析 - 雾雨七辰" />
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  
+    
+  <title>go-cron 源码分析 | 雾雨七辰</title>
+  <meta name="author" content="Comien">
   <meta name="description" content="go-cron 源码分析">
-  <meta property="og:description" content="go-cron 源码分析">
-  <meta name="twitter:description" content="go-cron 源码分析">
-  <meta name="author" content="雾雨七辰"/>
-  <meta property="og:site_name" content="雾雨七辰" />
-  <meta property="og:url" content="https://comien.github.io/posts/go-cron/" />
-  <meta property="og:type" content="article" />
-  <meta name="twitter:card" content="summary" />
-  <meta name="generator" content="Hugo 0.111.3">
-  <link rel="stylesheet" href="/css/style.css" media="all" />
-  <link rel="stylesheet" href="/css/style-dark.css" media="all and (prefers-color-scheme: dark)" />
+  <meta name="keywords" content="blog,developer,personal">
 
-  <link rel="stylesheet" href="/css/syntax.css" media="all" />
-  <link rel="stylesheet" href="/css/custom.css" media="all" />
+  <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="go-cron 源码分析"/>
+<meta name="twitter:description" content="go-cron 源码分析"/>
 
-  <script src="/js/script.js"></script>
-  <script src="/js/custom.js"></script>
-  <script defer src="/js/fontawesome.js"></script>
+  <meta property="og:title" content="go-cron 源码分析" />
+<meta property="og:description" content="go-cron 源码分析" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://comien.github.io/posts/go-cron/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2022-07-06T00:00:00+00:00" />
+<meta property="article:modified_time" content="2022-07-06T00:00:00+00:00" />
+<meta property="og:see_also" content="https://comien.github.io/posts/redis-hash-table/" /><meta property="og:see_also" content="https://comien.github.io/posts/redis-sds/" /><meta property="og:see_also" content="https://comien.github.io/posts/fifo/" /><meta property="og:see_also" content="https://comien.github.io/posts/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/" /><meta property="og:see_also" content="https://comien.github.io/posts/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/" />
+
+
+  <link rel="stylesheet" href="/css/bootstrap.min.css"  crossorigin="anonymous">
+  
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/css/all.min.css" rel="stylesheet" type="text/css">
+
+  <link rel="stylesheet" href="/sass/main.css">
+
+  <link rel="stylesheet" href="/zoomjs/zoom.min.css">
+
+  <script src=/js/lazysizes.min.js></script>
+
+  
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  
+
 </head>
 
-<body>
 
-<header class="site-header">
-  <nav class="site-navi">
-    <h1 class="site-title"><a href="/">雾雨七辰</a></h1>
-    <ul class="site-navi-items">
-      <li class="site-navi-item-categories"><a href="/categories/" title="分类">分类</a></li>
-      <li class="site-navi-item-tags"><a href="/tags/" title="标签">标签</a></li>
-      <li class="site-navi-item-archives"><a href="/archives/" title="归档">归档</a></li>
-      <li class="site-navi-item-about"><a href="/about/" title="关于我">关于我</a></li>
-    </ul>
-  </nav>
-</header>
-<hr class="site-header-bottom">
 
-  <div class="main" role="main">
-    <article class="article">
-      
-      <p class="article-title-series"><a href="/series/go-cron-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">go-cron 源码分析</a>&nbsp;/</p>
-      <h1 class="article-title">go-cron 源码分析</h1>
-      
-      <hr class="article-title-bottom">
-      <ul class="article-meta">
-        <li class="article-meta-date"><time>July 6, 2022</time></li>
-        <li class="article-meta-categories">
-          <a href="/categories/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">
-            <i class="fas fa-folder"></i>
-            源码分析
-          </a>&nbsp;
-        </li>
-        <li class="article-meta-tags">
-          <a href="/tags/golang/">
-            <i class="fas fa-tag"></i>
-            golang
-          </a>&nbsp;
-        </li>
-        <li class="article-meta-tags">
-          <a href="/tags/go-cron/">
-            <i class="fas fa-tag"></i>
-            go-cron
-          </a>&nbsp;
-        </li>
-      </ul>
-      
-<aside class="toc">
-  <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-基本使用">1. 基本使用</a>
-      <ul>
-        <li><a href="#11-install">1.1 install</a></li>
-        <li><a href="#12-直接传入-func-的方式">1.2 直接传入 func 的方式</a></li>
-        <li><a href="#13-使用-struct-的方式">1.3 使用 struct 的方式</a></li>
-      </ul>
-    </li>
-    <li><a href="#2-源码分析">2. 源码分析</a>
-      <ul>
-        <li><a href="#21-结构体定义">2.1 结构体定义</a></li>
-        <li><a href="#22-addfunc">2.2 AddFunc</a></li>
-        <li><a href="#23-addjob">2.3 AddJob</a></li>
-        <li><a href="#24-schedule">2.4 Schedule</a></li>
-        <li><a href="#25-start">2.5 Start</a></li>
-        <li><a href="#26-run">2.6 run</a></li>
-      </ul>
-    </li>
-  </ul>
+<body ontouchstart="">
+  
+  
+  <nav class="navbar navbar-default navbar-custom navbar-fixed-top invert">
+  <div class="container-fluid">
+    
+    <div class="navbar-header page-scroll">
+      <button type="button" class="navbar-toggle">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="https://comien.github.io/">雾雨七辰</a>
+    </div>
+    
+    <div id="huxblog_navbar">
+      <div class="navbar-collapse">
+        <ul class="nav navbar-nav navbar-right">
+          
+          <li><a href="/" title="首页">首页</a></li>
+          
+          <li><a href="/archive/" title="归档">归档</a></li>
+          
+          <li><a href="/series/code-analyse" title="源码分析">源码分析</a></li>
+          
+          <li><a href="/about/" title="关于我">关于我</a></li>
+          
+          <li><a href="https://github.com/comien/" title="Github">Github</a></li>
+          
+
+          <li class="search-icon">
+            <a href="javascript:void(0)">
+              <i class="fa fa-search"></i>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+  </div>
+  
 </nav>
-</aside>
-      <p>go-cron 是我们开发中经常使用的定时任务库</p>
-<h2 id="1-基本使用">1. 基本使用</h2>
-<h3 id="11-install">1.1 install</h3>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">$ go get github.com/robfig/cron/v3@v3.0.0
-</span></span></code></pre></td></tr></table>
+<script>
+  
+  
+  
+  var $body = document.body;
+  var $toggle = document.querySelector(".navbar-toggle");
+  var $navbar = document.querySelector("#huxblog_navbar");
+  var $collapse = document.querySelector(".navbar-collapse");
+
+  var __HuxNav__ = {
+    close: function () {
+      $navbar.className = " ";
+      
+      setTimeout(function () {
+        
+        if ($navbar.className.indexOf("in") < 0) {
+          $collapse.style.height = "0px";
+        }
+      }, 400);
+    },
+    open: function () {
+      $collapse.style.height = "auto";
+      $navbar.className += " in";
+    },
+  };
+
+  
+  $toggle.addEventListener("click", function (e) {
+    if ($navbar.className.indexOf("in") > 0) {
+      __HuxNav__.close();
+    } else {
+      __HuxNav__.open();
+    }
+  });
+
+  
+
+  document.addEventListener("click", function (e) {
+    if (e.target == $toggle) return;
+    if (e.target.className == "icon-bar") return;
+    __HuxNav__.close();
+  });
+</script>
+  
+<div class="search-page">
+  <div class="search-icon-close-container">
+    <span class="search-icon-close">
+      <i class="fa fa-chevron-down"></i>
+    </span>
+  </div>
+  <div class="search-main container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <form></form>
+        <input type="text" id="search-input" placeholder="$ grep...">
+        </form>
+        <div id="search-results" class="mini-post-list"></div>
+      </div>
+    </div>
+  </div>
 </div>
-</div><h3 id="12-直接传入-func-的方式">1.2 直接传入 func 的方式</h3>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="c1">// 如果上次任务尚未完成就跳过执行
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">task</span> <span class="o">:=</span> <span class="nx">cron</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">cron</span><span class="p">.</span><span class="nf">WithSeconds</span><span class="p">(),</span> <span class="nx">cron</span><span class="p">.</span><span class="nf">WithChain</span><span class="p">(</span><span class="nx">cron</span><span class="p">.</span><span class="nf">SkipIfStillRunning</span><span class="p">(</span><span class="nx">cron</span><span class="p">.</span><span class="nf">VerbosePrintfLogger</span><span class="p">(</span><span class="nx">log</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">os</span><span class="p">.</span><span class="nx">Stdout</span><span class="p">,</span> <span class="s">&#34;cron: &#34;</span><span class="p">,</span> <span class="nx">log</span><span class="p">.</span><span class="nx">LstdFlags</span><span class="p">)))))</span>
-</span></span><span class="line"><span class="cl">  <span class="c1">// 每2秒执行一次
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">task</span><span class="p">.</span><span class="nf">AddFunc</span><span class="p">(</span><span class="s">&#34;*/2 * * * * ?&#34;</span><span class="p">,</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;任务&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">	<span class="p">})</span>
-</span></span><span class="line"><span class="cl">	<span class="c1">// 启动计划任务
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">task</span><span class="p">.</span><span class="nf">Start</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">	<span class="c1">// 不能关闭已经在执行中的任务.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">defer</span> <span class="nx">task</span><span class="p">.</span><span class="nf">Stop</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">	<span class="k">select</span> <span class="p">{}</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><h3 id="13-使用-struct-的方式">1.3 使用 struct 的方式</h3>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span><span class="lnt">14
-</span><span class="lnt">15
-</span><span class="lnt">16
-</span><span class="lnt">17
-</span><span class="lnt">18
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// 定义struct
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">Task</span> <span class="kd">struct</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span><span class="line"><span class="cl"><span class="c1">// 为其实现函数 Run()
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="nx">Task</span><span class="p">)</span> <span class="nf">Run</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">log</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;任务&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="c1">// 上次任务未完成下次跳过
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">task</span> <span class="o">:=</span> <span class="nx">cron</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">cron</span><span class="p">.</span><span class="nf">WithSeconds</span><span class="p">(),</span> <span class="nx">cron</span><span class="p">.</span><span class="nf">WithChain</span><span class="p">(</span><span class="nx">cron</span><span class="p">.</span><span class="nf">SkipIfStillRunning</span><span class="p">(</span><span class="nx">cron</span><span class="p">.</span><span class="nf">VerbosePrintfLogger</span><span class="p">(</span><span class="nx">log</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="nx">os</span><span class="p">.</span><span class="nx">Stdout</span><span class="p">,</span> <span class="s">&#34;cron: &#34;</span><span class="p">,</span> <span class="nx">log</span><span class="p">.</span><span class="nx">LstdFlags</span><span class="p">)))))</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">task</span><span class="p">.</span><span class="nf">AddJob</span><span class="p">(</span><span class="s">&#34;*/2 * * * * ?&#34;</span><span class="p">,</span> <span class="nx">Task</span><span class="p">{})</span> <span class="c1">// 添加 job
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// 启动计划任务
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">task</span><span class="p">.</span><span class="nf">Start</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">	<span class="c1">// 不能关闭已经在执行中的任务.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">defer</span> <span class="nx">task</span><span class="p">.</span><span class="nf">Stop</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">	<span class="k">select</span> <span class="p">{}</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><h2 id="2-源码分析">2. 源码分析</h2>
-<h3 id="21-结构体定义">2.1 结构体定义</h3>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span><span class="lnt">14
-</span><span class="lnt">15
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">Cron</span> <span class="kd">struct</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">entries</span>   <span class="p">[]</span><span class="o">*</span><span class="nx">Entry</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">chain</span>     <span class="nx">Chain</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">stop</span>      <span class="kd">chan</span> <span class="kd">struct</span><span class="p">{}</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">add</span>       <span class="kd">chan</span> <span class="o">*</span><span class="nx">Entry</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">remove</span>    <span class="kd">chan</span> <span class="nx">EntryID</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">snapshot</span>  <span class="kd">chan</span> <span class="kd">chan</span> <span class="p">[]</span><span class="nx">Entry</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">running</span>   <span class="kt">bool</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">logger</span>    <span class="nx">Logger</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">runningMu</span> <span class="nx">sync</span><span class="p">.</span><span class="nx">Mutex</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">location</span>  <span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Location</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">parser</span>    <span class="nx">Parser</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">nextID</span>    <span class="nx">EntryID</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">jobWaiter</span> <span class="nx">sync</span><span class="p">.</span><span class="nx">WaitGroup</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><h3 id="22-addfunc">2.2 AddFunc</h3>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">FuncJob</span> <span class="kd">func</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">f</span> <span class="nx">FuncJob</span><span class="p">)</span> <span class="nf">Run</span><span class="p">()</span> <span class="p">{</span> <span class="nf">f</span><span class="p">()</span> <span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="c1">// AddFunc adds a func to the Cron to be run on the given schedule.
-</span></span></span><span class="line"><span class="cl"><span class="c1">// The spec is parsed using the time zone of this Cron instance as the default.
-</span></span></span><span class="line"><span class="cl"><span class="c1">// An opaque ID is returned that can be used to later remove it.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Cron</span><span class="p">)</span> <span class="nf">AddFunc</span><span class="p">(</span><span class="nx">spec</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">cmd</span> <span class="kd">func</span><span class="p">())</span> <span class="p">(</span><span class="nx">EntryID</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">c</span><span class="p">.</span><span class="nf">AddJob</span><span class="p">(</span><span class="nx">spec</span><span class="p">,</span> <span class="nf">FuncJob</span><span class="p">(</span><span class="nx">cmd</span><span class="p">))</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p>可以看到，AddFunc 中也是调用的 AddJob，AddFunc 将传入的 func 包装为 <code>FuncJob</code> 类型，并且 FuncJob 实现了函数 Run()</p>
-<h3 id="23-addjob">2.3 AddJob</h3>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// AddJob adds a Job to the Cron to be run on the given schedule.
-</span></span></span><span class="line"><span class="cl"><span class="c1">// The spec is parsed using the time zone of this Cron instance as the default.
-</span></span></span><span class="line"><span class="cl"><span class="c1">// An opaque ID is returned that can be used to later remove it.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Cron</span><span class="p">)</span> <span class="nf">AddJob</span><span class="p">(</span><span class="nx">spec</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">cmd</span> <span class="nx">Job</span><span class="p">)</span> <span class="p">(</span><span class="nx">EntryID</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">schedule</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nx">parser</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="nx">spec</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">err</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">c</span><span class="p">.</span><span class="nf">Schedule</span><span class="p">(</span><span class="nx">schedule</span><span class="p">,</span> <span class="nx">cmd</span><span class="p">),</span> <span class="kc">nil</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p>AddJob 调用了解析器，解析传入的 cron 表达式（我们这里不具体分析 cron 表达式的解析），得到 Schedule type struct
+
+  
+  
+
+
+<style type="text/css">
+  header.intro-header {
+    position: relative;
+    background-image: url('');
+  }
+</style>
+
+<header class="intro-header style-text">
+
+  <div class="header-mask"></div>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <div class="post-heading">
+          <div class="tags">
+            
+            <a class="tag" href="/tags/golang/" title="golang">golang</a>
+            
+            <a class="tag" href="/tags/go-cron/" title="go-cron">go-cron</a>
+            
+          </div>
+          <h1>go-cron 源码分析</h1>
+          <h2 class="subheading"></h2>
+          <span class="meta">
+            Posted by  comien 
+            on Wed, Jul 6, 2022
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+
+  
+
+
+<article>
+  <div class="container">
+    <div class="row">
+
+      
+      <div class="
+              col-lg-8 col-lg-offset-2
+              col-md-10 col-md-offset-1
+              post-container">
+        <p>go-cron 是我们开发中经常使用的定时任务库</p>
+<h2 id="1-基本使用">1. 基本使用<a class="anchorjs-link" href="#1-%e5%9f%ba%e6%9c%ac%e4%bd%bf%e7%94%a8"></a></h2><h3 id="11-install">1.1 install<a class="anchorjs-link" href="#11-install"></a></h3><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>$ go get github.com/robfig/cron/v3@v3.0.0
+</span></span></code></pre></div><h3 id="12-直接传入-func-的方式">1.2 直接传入 func 的方式<a class="anchorjs-link" href="#12-%e7%9b%b4%e6%8e%a5%e4%bc%a0%e5%85%a5-func-%e7%9a%84%e6%96%b9%e5%bc%8f"></a></h3><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">main</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>	<span style="color:#6272a4">// 如果上次任务尚未完成就跳过执行
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#6272a4"></span>	task <span style="color:#ff79c6">:=</span> cron.<span style="color:#50fa7b">New</span>(cron.<span style="color:#50fa7b">WithSeconds</span>(), cron.<span style="color:#50fa7b">WithChain</span>(cron.<span style="color:#50fa7b">SkipIfStillRunning</span>(cron.<span style="color:#50fa7b">VerbosePrintfLogger</span>(log.<span style="color:#50fa7b">New</span>(os.Stdout, <span style="color:#f1fa8c">&#34;cron: &#34;</span>, log.LstdFlags)))))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>  <span style="color:#6272a4">// 每2秒执行一次
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#6272a4"></span>	task.<span style="color:#50fa7b">AddFunc</span>(<span style="color:#f1fa8c">&#34;*/2 * * * * ?&#34;</span>, <span style="color:#8be9fd;font-style:italic">func</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>		log.<span style="color:#50fa7b">Println</span>(<span style="color:#f1fa8c">&#34;任务&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>	})
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>	<span style="color:#6272a4">// 启动计划任务
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span><span style="color:#6272a4"></span>	task.<span style="color:#50fa7b">Start</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>	<span style="color:#6272a4">// 不能关闭已经在执行中的任务.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span><span style="color:#6272a4"></span>	<span style="color:#ff79c6">defer</span> task.<span style="color:#50fa7b">Stop</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>	<span style="color:#ff79c6">select</span> {}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>}
+</span></span></code></pre></div><h3 id="13-使用-struct-的方式">1.3 使用 struct 的方式<a class="anchorjs-link" href="#13-%e4%bd%bf%e7%94%a8-struct-%e7%9a%84%e6%96%b9%e5%bc%8f"></a></h3><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#6272a4">// 定义struct
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">type</span> Task <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span><span style="color:#6272a4">// 为其实现函数 Run()
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (t Task) <span style="color:#50fa7b">Run</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>	log.<span style="color:#50fa7b">Println</span>(<span style="color:#f1fa8c">&#34;任务&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">main</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>	<span style="color:#6272a4">// 上次任务未完成下次跳过
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span><span style="color:#6272a4"></span>	task <span style="color:#ff79c6">:=</span> cron.<span style="color:#50fa7b">New</span>(cron.<span style="color:#50fa7b">WithSeconds</span>(), cron.<span style="color:#50fa7b">WithChain</span>(cron.<span style="color:#50fa7b">SkipIfStillRunning</span>(cron.<span style="color:#50fa7b">VerbosePrintfLogger</span>(log.<span style="color:#50fa7b">New</span>(os.Stdout, <span style="color:#f1fa8c">&#34;cron: &#34;</span>, log.LstdFlags)))))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>	task.<span style="color:#50fa7b">AddJob</span>(<span style="color:#f1fa8c">&#34;*/2 * * * * ?&#34;</span>, Task{}) <span style="color:#6272a4">// 添加 job
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// 启动计划任务
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#6272a4"></span>	task.<span style="color:#50fa7b">Start</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>	<span style="color:#6272a4">// 不能关闭已经在执行中的任务.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span><span style="color:#6272a4"></span>	<span style="color:#ff79c6">defer</span> task.<span style="color:#50fa7b">Stop</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>	<span style="color:#ff79c6">select</span> {}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>}
+</span></span></code></pre></div><h2 id="2-源码分析">2. 源码分析<a class="anchorjs-link" href="#2-%e6%ba%90%e7%a0%81%e5%88%86%e6%9e%90"></a></h2><h3 id="21-结构体定义">2.1 结构体定义<a class="anchorjs-link" href="#21-%e7%bb%93%e6%9e%84%e4%bd%93%e5%ae%9a%e4%b9%89"></a></h3><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">type</span> Cron <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>	entries   []<span style="color:#ff79c6">*</span>Entry
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>	chain     Chain
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>	stop      <span style="color:#8be9fd;font-style:italic">chan</span> <span style="color:#8be9fd;font-style:italic">struct</span>{}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>	add       <span style="color:#8be9fd;font-style:italic">chan</span> <span style="color:#ff79c6">*</span>Entry
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>	remove    <span style="color:#8be9fd;font-style:italic">chan</span> EntryID
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>	snapshot  <span style="color:#8be9fd;font-style:italic">chan</span> <span style="color:#8be9fd;font-style:italic">chan</span> []Entry
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>	running   <span style="color:#8be9fd">bool</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>	logger    Logger
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>	runningMu sync.Mutex
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>	location  <span style="color:#ff79c6">*</span>time.Location
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>	parser    Parser
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>	nextID    EntryID
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>	jobWaiter sync.WaitGroup
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>}
+</span></span></code></pre></div><h3 id="22-addfunc">2.2 AddFunc<a class="anchorjs-link" href="#22-addfunc"></a></h3><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">type</span> FuncJob <span style="color:#8be9fd;font-style:italic">func</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#8be9fd;font-style:italic">func</span> (f FuncJob) <span style="color:#50fa7b">Run</span>() { <span style="color:#50fa7b">f</span>() }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#6272a4">// AddFunc adds a func to the Cron to be run on the given schedule.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span><span style="color:#6272a4">// The spec is parsed using the time zone of this Cron instance as the default.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span><span style="color:#6272a4">// An opaque ID is returned that can be used to later remove it.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (c <span style="color:#ff79c6">*</span>Cron) <span style="color:#50fa7b">AddFunc</span>(spec <span style="color:#8be9fd">string</span>, cmd <span style="color:#8be9fd;font-style:italic">func</span>()) (EntryID, <span style="color:#8be9fd">error</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>	<span style="color:#ff79c6">return</span> c.<span style="color:#50fa7b">AddJob</span>(spec, <span style="color:#50fa7b">FuncJob</span>(cmd))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>}
+</span></span></code></pre></div><p>可以看到，AddFunc 中也是调用的 AddJob，AddFunc 将传入的 func 包装为 <code>FuncJob</code> 类型，并且 FuncJob 实现了函数 Run()</p>
+<h3 id="23-addjob">2.3 AddJob<a class="anchorjs-link" href="#23-addjob"></a></h3><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#6272a4">// AddJob adds a Job to the Cron to be run on the given schedule.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#6272a4">// The spec is parsed using the time zone of this Cron instance as the default.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#6272a4">// An opaque ID is returned that can be used to later remove it.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (c <span style="color:#ff79c6">*</span>Cron) <span style="color:#50fa7b">AddJob</span>(spec <span style="color:#8be9fd">string</span>, cmd Job) (EntryID, <span style="color:#8be9fd">error</span>) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>	schedule, err <span style="color:#ff79c6">:=</span> c.parser.<span style="color:#50fa7b">Parse</span>(spec)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>	<span style="color:#ff79c6">if</span> err <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>		<span style="color:#ff79c6">return</span> <span style="color:#bd93f9">0</span>, err
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>	<span style="color:#ff79c6">return</span> c.<span style="color:#50fa7b">Schedule</span>(schedule, cmd), <span style="color:#ff79c6">nil</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>}
+</span></span></code></pre></div><p>AddJob 调用了解析器，解析传入的 cron 表达式（我们这里不具体分析 cron 表达式的解析），得到 Schedule type struct
 接下来调用 Schedule 方法</p>
-<h3 id="24-schedule">2.4 Schedule</h3>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span><span class="lnt">14
-</span><span class="lnt">15
-</span><span class="lnt">16
-</span><span class="lnt">17
-</span><span class="lnt">18
-</span><span class="lnt">19
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Schedule adds a Job to the Cron to be run on the given schedule.
-</span></span></span><span class="line"><span class="cl"><span class="c1">// The job is wrapped with the configured Chain.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Cron</span><span class="p">)</span> <span class="nf">Schedule</span><span class="p">(</span><span class="nx">schedule</span> <span class="nx">Schedule</span><span class="p">,</span> <span class="nx">cmd</span> <span class="nx">Job</span><span class="p">)</span> <span class="nx">EntryID</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">c</span><span class="p">.</span><span class="nx">runningMu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">	<span class="k">defer</span> <span class="nx">c</span><span class="p">.</span><span class="nx">runningMu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">c</span><span class="p">.</span><span class="nx">nextID</span><span class="o">++</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">entry</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">Entry</span><span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="nx">ID</span><span class="p">:</span>         <span class="nx">c</span><span class="p">.</span><span class="nx">nextID</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">		<span class="nx">Schedule</span><span class="p">:</span>   <span class="nx">schedule</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">		<span class="nx">WrappedJob</span><span class="p">:</span> <span class="nx">c</span><span class="p">.</span><span class="nx">chain</span><span class="p">.</span><span class="nf">Then</span><span class="p">(</span><span class="nx">cmd</span><span class="p">),</span>
-</span></span><span class="line"><span class="cl">		<span class="nx">Job</span><span class="p">:</span>        <span class="nx">cmd</span><span class="p">,</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">!</span><span class="nx">c</span><span class="p">.</span><span class="nx">running</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="nx">c</span><span class="p">.</span><span class="nx">entries</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">entries</span><span class="p">,</span> <span class="nx">entry</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="nx">c</span><span class="p">.</span><span class="nx">add</span> <span class="o">&lt;-</span> <span class="nx">entry</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">entry</span><span class="p">.</span><span class="nx">ID</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p>在 Schedule 中，通过加锁保证并发安全，获取一个任务 id，构建了 Entry struct<br>
+<h3 id="24-schedule">2.4 Schedule<a class="anchorjs-link" href="#24-schedule"></a></h3><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#6272a4">// Schedule adds a Job to the Cron to be run on the given schedule.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#6272a4">// The job is wrapped with the configured Chain.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (c <span style="color:#ff79c6">*</span>Cron) <span style="color:#50fa7b">Schedule</span>(schedule Schedule, cmd Job) EntryID {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>	c.runningMu.<span style="color:#50fa7b">Lock</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>	<span style="color:#ff79c6">defer</span> c.runningMu.<span style="color:#50fa7b">Unlock</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>	c.nextID<span style="color:#ff79c6">++</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>	entry <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">&amp;</span>Entry{
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>		ID:         c.nextID,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>		Schedule:   schedule,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>		WrappedJob: c.chain.<span style="color:#50fa7b">Then</span>(cmd),
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>		Job:        cmd,
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>	<span style="color:#ff79c6">if</span> !c.running {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>		c.entries = <span style="color:#8be9fd;font-style:italic">append</span>(c.entries, entry)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>	} <span style="color:#ff79c6">else</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>		c.add <span style="color:#ff79c6">&lt;-</span> entry
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>	<span style="color:#ff79c6">return</span> entry.ID
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>}
+</span></span></code></pre></div><p>在 Schedule 中，通过加锁保证并发安全，获取一个任务 id，构建了 Entry struct<br>
 此时判断了任务状态</p>
 <ul>
 <li>如果 cron 不是 running status, append 到 entries 数组中</li>
 <li>如果 cron 是 running status, 就放到 channel 中</li>
 </ul>
-<h3 id="25-start">2.5 Start</h3>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Start the cron scheduler in its own goroutine, or no-op if already started.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Cron</span><span class="p">)</span> <span class="nf">Start</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">c</span><span class="p">.</span><span class="nx">runningMu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">	<span class="k">defer</span> <span class="nx">c</span><span class="p">.</span><span class="nx">runningMu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">c</span><span class="p">.</span><span class="nx">running</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="k">return</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">c</span><span class="p">.</span><span class="nx">running</span> <span class="p">=</span> <span class="kc">true</span>
-</span></span><span class="line"><span class="cl">	<span class="k">go</span> <span class="nx">c</span><span class="p">.</span><span class="nf">run</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p>接下来，在 Start 方法中，可以看到，更新了 running status，并通过协程的方式，调用私有方法 run() <br>
+<h3 id="25-start">2.5 Start<a class="anchorjs-link" href="#25-start"></a></h3><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#6272a4">// Start the cron scheduler in its own goroutine, or no-op if already started.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (c <span style="color:#ff79c6">*</span>Cron) <span style="color:#50fa7b">Start</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>	c.runningMu.<span style="color:#50fa7b">Lock</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>	<span style="color:#ff79c6">defer</span> c.runningMu.<span style="color:#50fa7b">Unlock</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>	<span style="color:#ff79c6">if</span> c.running {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>		<span style="color:#ff79c6">return</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>	c.running = <span style="color:#ff79c6">true</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>	<span style="color:#ff79c6">go</span> c.<span style="color:#50fa7b">run</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>}
+</span></span></code></pre></div><p>接下来，在 Start 方法中，可以看到，更新了 running status，并通过协程的方式，调用私有方法 run() <br>
 因为方法 run() 是通过协程调用的，因此这里不会阻塞，所以调用完成 Start 后，需要我们保证主线程不会退出<br>
 然后我们继续跟进方法 run()</p>
-<h3 id="26-run">2.6 run</h3>
-<p>run() 方法内容比较多，我们分几段分析</p>
-<h4 id="261-遍历-entries">2.6.1 遍历 entries</h4>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Cron</span><span class="p">)</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">c</span><span class="p">.</span><span class="nx">logger</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;start&#34;</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="c1">// Figure out the next activation times for each entry.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">now</span> <span class="o">:=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">entry</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">c</span><span class="p">.</span><span class="nx">entries</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="nx">entry</span><span class="p">.</span><span class="nx">Next</span> <span class="p">=</span> <span class="nx">entry</span><span class="p">.</span><span class="nx">Schedule</span><span class="p">.</span><span class="nf">Next</span><span class="p">(</span><span class="nx">now</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">		<span class="nx">c</span><span class="p">.</span><span class="nx">logger</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;schedule&#34;</span><span class="p">,</span> <span class="s">&#34;now&#34;</span><span class="p">,</span> <span class="nx">now</span><span class="p">,</span> <span class="s">&#34;entry&#34;</span><span class="p">,</span> <span class="nx">entry</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="s">&#34;next&#34;</span><span class="p">,</span> <span class="nx">entry</span><span class="p">.</span><span class="nx">Next</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="c1">// --- snip ---
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p>首先进入 run() 后，获取了当前时间，并对 entries 进行了遍历<br>
+<h3 id="26-run">2.6 run<a class="anchorjs-link" href="#26-run"></a></h3><p>run() 方法内容比较多，我们分几段分析</p>
+<h4 id="261-遍历-entries">2.6.1 遍历 entries<a class="anchorjs-link" href="#261-%e9%81%8d%e5%8e%86-entries"></a></h4><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">func</span> (c <span style="color:#ff79c6">*</span>Cron) <span style="color:#50fa7b">run</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>	c.logger.<span style="color:#50fa7b">Info</span>(<span style="color:#f1fa8c">&#34;start&#34;</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>	<span style="color:#6272a4">// Figure out the next activation times for each entry.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#6272a4"></span>	now <span style="color:#ff79c6">:=</span> c.<span style="color:#50fa7b">now</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>	<span style="color:#ff79c6">for</span> _, entry <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">range</span> c.entries {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>		entry.Next = entry.Schedule.<span style="color:#50fa7b">Next</span>(now)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>		c.logger.<span style="color:#50fa7b">Info</span>(<span style="color:#f1fa8c">&#34;schedule&#34;</span>, <span style="color:#f1fa8c">&#34;now&#34;</span>, now, <span style="color:#f1fa8c">&#34;entry&#34;</span>, entry.ID, <span style="color:#f1fa8c">&#34;next&#34;</span>, entry.Next)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span>	<span style="color:#6272a4">// --- snip ---
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span><span style="color:#6272a4"></span>}
+</span></span></code></pre></div><p>首先进入 run() 后，获取了当前时间，并对 entries 进行了遍历<br>
 通过每个 Entry 中的 Schedule 计算下次执行时间，存放在 entry.Next 字段</p>
-<h4 id="262-排序并产生一个定时触发器">2.6.2 排序并产生一个定时触发器</h4>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span><span class="lnt">14
-</span><span class="lnt">15
-</span><span class="lnt">16
-</span><span class="lnt">17
-</span><span class="lnt">18
-</span><span class="lnt">19
-</span><span class="lnt">20
-</span><span class="lnt">21
-</span><span class="lnt">22
-</span><span class="lnt">23
-</span><span class="lnt">24
-</span><span class="lnt">25
-</span><span class="lnt">26
-</span><span class="lnt">27
-</span><span class="lnt">28
-</span><span class="lnt">29
-</span><span class="lnt">30
-</span><span class="lnt">31
-</span><span class="lnt">32
-</span><span class="lnt">33
-</span><span class="lnt">34
-</span><span class="lnt">35
-</span><span class="lnt">36
-</span><span class="lnt">37
-</span><span class="lnt">38
-</span><span class="lnt">39
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// --- snip ---
-</span></span></span><span class="line"><span class="cl"><span class="c1">//  时间排序实现
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">byTime</span> <span class="p">[]</span><span class="o">*</span><span class="nx">Entry</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="nx">byTime</span><span class="p">)</span> <span class="nf">Len</span><span class="p">()</span> <span class="kt">int</span>      <span class="p">{</span> <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nx">s</span><span class="p">)</span> <span class="p">}</span>
-</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="nx">byTime</span><span class="p">)</span> <span class="nf">Swap</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">j</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{</span> <span class="nx">s</span><span class="p">[</span><span class="nx">i</span><span class="p">],</span> <span class="nx">s</span><span class="p">[</span><span class="nx">j</span><span class="p">]</span> <span class="p">=</span> <span class="nx">s</span><span class="p">[</span><span class="nx">j</span><span class="p">],</span> <span class="nx">s</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">}</span>
-</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">s</span> <span class="nx">byTime</span><span class="p">)</span> <span class="nf">Less</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">j</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="c1">// Two zero times should return false.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// Otherwise, zero is &#34;greater&#34; than any other time.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// (To sort it at the end of the list.)
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">if</span> <span class="nx">s</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">Next</span><span class="p">.</span><span class="nf">IsZero</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">false</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">s</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">Next</span><span class="p">.</span><span class="nf">IsZero</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">true</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">s</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">Next</span><span class="p">.</span><span class="nf">Before</span><span class="p">(</span><span class="nx">s</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">Next</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="c1">// --- snip ---
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Cron</span><span class="p">)</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="c1">// --- snip ---
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
-</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="c1">// Determine the next entry to run.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="nx">sort</span><span class="p">.</span><span class="nf">Sort</span><span class="p">(</span><span class="nf">byTime</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">entries</span><span class="p">))</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">		<span class="kd">var</span> <span class="nx">timer</span> <span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Timer</span>
-</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">entries</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nx">c</span><span class="p">.</span><span class="nx">entries</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Next</span><span class="p">.</span><span class="nf">IsZero</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">			<span class="c1">// If there are no entries yet, just sleep - it still handles new entries
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="c1">// and stop requests.
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="nx">timer</span> <span class="p">=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">NewTimer</span><span class="p">(</span><span class="mi">100000</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Hour</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">			<span class="nx">timer</span> <span class="p">=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">NewTimer</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">entries</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Next</span><span class="p">.</span><span class="nf">Sub</span><span class="p">(</span><span class="nx">now</span><span class="p">))</span> <span class="c1">// 定时触发器
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">		<span class="c1">// --- snip ---
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="p">}</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p>entries 完成遍历后，run() 进入死循环<br>
+<h4 id="262-排序并产生一个定时触发器">2.6.2 排序并产生一个定时触发器<a class="anchorjs-link" href="#262-%e6%8e%92%e5%ba%8f%e5%b9%b6%e4%ba%a7%e7%94%9f%e4%b8%80%e4%b8%aa%e5%ae%9a%e6%97%b6%e8%a7%a6%e5%8f%91%e5%99%a8"></a></h4><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#6272a4">// --- snip ---
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span><span style="color:#6272a4">//  时间排序实现
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">type</span> byTime []<span style="color:#ff79c6">*</span>Entry
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span><span style="color:#8be9fd;font-style:italic">func</span> (s byTime) <span style="color:#50fa7b">Len</span>() <span style="color:#8be9fd">int</span>      { <span style="color:#ff79c6">return</span> <span style="color:#8be9fd;font-style:italic">len</span>(s) }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span><span style="color:#8be9fd;font-style:italic">func</span> (s byTime) <span style="color:#50fa7b">Swap</span>(i, j <span style="color:#8be9fd">int</span>) { s[i], s[j] = s[j], s[i] }
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span><span style="color:#8be9fd;font-style:italic">func</span> (s byTime) <span style="color:#50fa7b">Less</span>(i, j <span style="color:#8be9fd">int</span>) <span style="color:#8be9fd">bool</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>	<span style="color:#6272a4">// Two zero times should return false.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// Otherwise, zero is &#34;greater&#34; than any other time.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span><span style="color:#6272a4"></span>	<span style="color:#6272a4">// (To sort it at the end of the list.)
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span><span style="color:#6272a4"></span>	<span style="color:#ff79c6">if</span> s[i].Next.<span style="color:#50fa7b">IsZero</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>		<span style="color:#ff79c6">return</span> <span style="color:#ff79c6">false</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span>	<span style="color:#ff79c6">if</span> s[j].Next.<span style="color:#50fa7b">IsZero</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>		<span style="color:#ff79c6">return</span> <span style="color:#ff79c6">true</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>	<span style="color:#ff79c6">return</span> s[i].Next.<span style="color:#50fa7b">Before</span>(s[j].Next)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span><span style="color:#6272a4">// --- snip ---
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (c <span style="color:#ff79c6">*</span>Cron) <span style="color:#50fa7b">run</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span>	<span style="color:#6272a4">// --- snip ---
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>	<span style="color:#ff79c6">for</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>		<span style="color:#6272a4">// Determine the next entry to run.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span><span style="color:#6272a4"></span>		sort.<span style="color:#50fa7b">Sort</span>(<span style="color:#50fa7b">byTime</span>(c.entries))
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">27</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">28</span><span>		<span style="color:#8be9fd;font-style:italic">var</span> timer <span style="color:#ff79c6">*</span>time.Timer
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">29</span><span>		<span style="color:#ff79c6">if</span> <span style="color:#8be9fd;font-style:italic">len</span>(c.entries) <span style="color:#ff79c6">==</span> <span style="color:#bd93f9">0</span> <span style="color:#ff79c6">||</span> c.entries[<span style="color:#bd93f9">0</span>].Next.<span style="color:#50fa7b">IsZero</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">30</span><span>			<span style="color:#6272a4">// If there are no entries yet, just sleep - it still handles new entries
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">31</span><span><span style="color:#6272a4"></span>			<span style="color:#6272a4">// and stop requests.
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">32</span><span><span style="color:#6272a4"></span>			timer = time.<span style="color:#50fa7b">NewTimer</span>(<span style="color:#bd93f9">100000</span> <span style="color:#ff79c6">*</span> time.Hour)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">33</span><span>		} <span style="color:#ff79c6">else</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">34</span><span>			timer = time.<span style="color:#50fa7b">NewTimer</span>(c.entries[<span style="color:#bd93f9">0</span>].Next.<span style="color:#50fa7b">Sub</span>(now)) <span style="color:#6272a4">// 定时触发器
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">35</span><span><span style="color:#6272a4"></span>		}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">36</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">37</span><span>		<span style="color:#6272a4">// --- snip ---
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">38</span><span><span style="color:#6272a4"></span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">39</span><span>}
+</span></span></code></pre></div><p>entries 完成遍历后，run() 进入死循环<br>
 循环内</p>
 <ul>
 <li>首先对 entries 进行排序，排序方式是通过 Next 字段的比较</li>
 <li>然后获取第一个任务，计算第一个任务和当前时间差，生成定时触发器（如果没有任务，触发器默认了一个很长的时间）</li>
 </ul>
-<h4 id="263-轮询触发器">2.6.3 轮询触发器</h4>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
-</span><span class="lnt"> 2
-</span><span class="lnt"> 3
-</span><span class="lnt"> 4
-</span><span class="lnt"> 5
-</span><span class="lnt"> 6
-</span><span class="lnt"> 7
-</span><span class="lnt"> 8
-</span><span class="lnt"> 9
-</span><span class="lnt">10
-</span><span class="lnt">11
-</span><span class="lnt">12
-</span><span class="lnt">13
-</span><span class="lnt">14
-</span><span class="lnt">15
-</span><span class="lnt">16
-</span><span class="lnt">17
-</span><span class="lnt">18
-</span><span class="lnt">19
-</span><span class="lnt">20
-</span><span class="lnt">21
-</span><span class="lnt">22
-</span><span class="lnt">23
-</span><span class="lnt">24
-</span><span class="lnt">25
-</span><span class="lnt">26
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Cron</span><span class="p">)</span> <span class="nf">run</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="c1">// --- snip --- 
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
-</span></span><span class="line"><span class="cl">		<span class="k">for</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">			<span class="k">select</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">			<span class="k">case</span> <span class="nx">now</span> <span class="p">=</span> <span class="o">&lt;-</span><span class="nx">timer</span><span class="p">.</span><span class="nx">C</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">				<span class="nx">now</span> <span class="p">=</span> <span class="nx">now</span><span class="p">.</span><span class="nf">In</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">location</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">				<span class="nx">c</span><span class="p">.</span><span class="nx">logger</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;wake&#34;</span><span class="p">,</span> <span class="s">&#34;now&#34;</span><span class="p">,</span> <span class="nx">now</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">				<span class="c1">// Run every entry whose next time was less than now
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>				<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">e</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">c</span><span class="p">.</span><span class="nx">entries</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">					<span class="k">if</span> <span class="nx">e</span><span class="p">.</span><span class="nx">Next</span><span class="p">.</span><span class="nf">After</span><span class="p">(</span><span class="nx">now</span><span class="p">)</span> <span class="o">||</span> <span class="nx">e</span><span class="p">.</span><span class="nx">Next</span><span class="p">.</span><span class="nf">IsZero</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">						<span class="k">break</span> <span class="c1">// 因为 entries 已经做了排序，所有如果某个任务没到时间，就结束遍历
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>					<span class="p">}</span>
-</span></span><span class="line"><span class="cl">					<span class="nx">c</span><span class="p">.</span><span class="nf">startJob</span><span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">WrappedJob</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">					<span class="nx">e</span><span class="p">.</span><span class="nx">Prev</span> <span class="p">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">Next</span>
-</span></span><span class="line"><span class="cl">					<span class="nx">e</span><span class="p">.</span><span class="nx">Next</span> <span class="p">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">Schedule</span><span class="p">.</span><span class="nf">Next</span><span class="p">(</span><span class="nx">now</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">					<span class="nx">c</span><span class="p">.</span><span class="nx">logger</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;run&#34;</span><span class="p">,</span> <span class="s">&#34;now&#34;</span><span class="p">,</span> <span class="nx">now</span><span class="p">,</span> <span class="s">&#34;entry&#34;</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="s">&#34;next&#34;</span><span class="p">,</span> <span class="nx">e</span><span class="p">.</span><span class="nx">Next</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">				<span class="p">}</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">			<span class="c1">// --- snip ---
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
-</span></span><span class="line"><span class="cl">			<span class="k">break</span>
-</span></span><span class="line"><span class="cl">		<span class="p">}</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p>最后 run() 进行入轮询<br>
+<h4 id="263-轮询触发器">2.6.3 轮询触发器<a class="anchorjs-link" href="#263-%e8%bd%ae%e8%af%a2%e8%a7%a6%e5%8f%91%e5%99%a8"></a></h4><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 1</span><span><span style="color:#8be9fd;font-style:italic">func</span> (c <span style="color:#ff79c6">*</span>Cron) <span style="color:#50fa7b">run</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 2</span><span>	<span style="color:#6272a4">// --- snip --- 
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 3</span><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 4</span><span>		<span style="color:#ff79c6">for</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 5</span><span>			<span style="color:#ff79c6">select</span> {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 6</span><span>			<span style="color:#ff79c6">case</span> now = <span style="color:#ff79c6">&lt;-</span>timer.C:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 7</span><span>				now = now.<span style="color:#50fa7b">In</span>(c.location)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 8</span><span>				c.logger.<span style="color:#50fa7b">Info</span>(<span style="color:#f1fa8c">&#34;wake&#34;</span>, <span style="color:#f1fa8c">&#34;now&#34;</span>, now)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f"> 9</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">10</span><span>				<span style="color:#6272a4">// Run every entry whose next time was less than now
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">11</span><span><span style="color:#6272a4"></span>				<span style="color:#ff79c6">for</span> _, e <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">range</span> c.entries {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">12</span><span>					<span style="color:#ff79c6">if</span> e.Next.<span style="color:#50fa7b">After</span>(now) <span style="color:#ff79c6">||</span> e.Next.<span style="color:#50fa7b">IsZero</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">13</span><span>						<span style="color:#ff79c6">break</span> <span style="color:#6272a4">// 因为 entries 已经做了排序，所有如果某个任务没到时间，就结束遍历
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">14</span><span><span style="color:#6272a4"></span>					}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">15</span><span>					c.<span style="color:#50fa7b">startJob</span>(e.WrappedJob)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">16</span><span>					e.Prev = e.Next
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">17</span><span>					e.Next = e.Schedule.<span style="color:#50fa7b">Next</span>(now)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">18</span><span>					c.logger.<span style="color:#50fa7b">Info</span>(<span style="color:#f1fa8c">&#34;run&#34;</span>, <span style="color:#f1fa8c">&#34;now&#34;</span>, now, <span style="color:#f1fa8c">&#34;entry&#34;</span>, e.ID, <span style="color:#f1fa8c">&#34;next&#34;</span>, e.Next)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">19</span><span>				}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">20</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">21</span><span>			<span style="color:#6272a4">// --- snip ---
+</span></span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">22</span><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">23</span><span>			<span style="color:#ff79c6">break</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">24</span><span>		}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">25</span><span>	}
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">26</span><span>}
+</span></span></code></pre></div><p>最后 run() 进行入轮询<br>
 当任务时间到了，定时触发器 channel 得到一个时间，将时间转换成 time.Local<br>
 遍历所有的 entries<br>
 因为 entries 已经做了排序，所有如果某个任务没到时间，那剩余的任务也没到时间，就结束遍历<br>
 到达时间的任务调用 startJob</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
-</span><span class="lnt">6
-</span><span class="lnt">7
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">Cron</span><span class="p">)</span> <span class="nf">startJob</span><span class="p">(</span><span class="nx">j</span> <span class="nx">Job</span><span class="p">)</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">	<span class="nx">c</span><span class="p">.</span><span class="nx">jobWaiter</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">	<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
-</span></span><span class="line"><span class="cl">		<span class="k">defer</span> <span class="nx">c</span><span class="p">.</span><span class="nx">jobWaiter</span><span class="p">.</span><span class="nf">Done</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">		<span class="nx">j</span><span class="p">.</span><span class="nf">Run</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">	<span class="p">}()</span>
-</span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p>startJob 启动一个协程跑结构体实现的函数 Run()</p>
-<div class="highlight"><div class="chroma">
-<table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt">1
-</span><span class="lnt">2
-</span><span class="lnt">3
-</span><span class="lnt">4
-</span><span class="lnt">5
-</span><span class="lnt">6
-</span></code></pre></td>
-<td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">case</span> <span class="nx">newEntry</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">c</span><span class="p">.</span><span class="nx">add</span><span class="p">:</span>
-</span></span><span class="line"><span class="cl">				<span class="nx">timer</span><span class="p">.</span><span class="nf">Stop</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">				<span class="nx">now</span> <span class="p">=</span> <span class="nx">c</span><span class="p">.</span><span class="nf">now</span><span class="p">()</span>
-</span></span><span class="line"><span class="cl">				<span class="nx">newEntry</span><span class="p">.</span><span class="nx">Next</span> <span class="p">=</span> <span class="nx">newEntry</span><span class="p">.</span><span class="nx">Schedule</span><span class="p">.</span><span class="nf">Next</span><span class="p">(</span><span class="nx">now</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">				<span class="nx">c</span><span class="p">.</span><span class="nx">entries</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">entries</span><span class="p">,</span> <span class="nx">newEntry</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">				<span class="nx">c</span><span class="p">.</span><span class="nx">logger</span><span class="p">.</span><span class="nf">Info</span><span class="p">(</span><span class="s">&#34;added&#34;</span><span class="p">,</span> <span class="s">&#34;now&#34;</span><span class="p">,</span> <span class="nx">now</span><span class="p">,</span> <span class="s">&#34;entry&#34;</span><span class="p">,</span> <span class="nx">newEntry</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="s">&#34;next&#34;</span><span class="p">,</span> <span class="nx">newEntry</span><span class="p">.</span><span class="nx">Next</span><span class="p">)</span>
-</span></span></code></pre></td></tr></table>
-</div>
-</div><p>继续回到轮询逻辑<br>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#8be9fd;font-style:italic">func</span> (c <span style="color:#ff79c6">*</span>Cron) <span style="color:#50fa7b">startJob</span>(j Job) {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>	c.jobWaiter.<span style="color:#50fa7b">Add</span>(<span style="color:#bd93f9">1</span>)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>	<span style="color:#ff79c6">go</span> <span style="color:#8be9fd;font-style:italic">func</span>() {
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>		<span style="color:#ff79c6">defer</span> c.jobWaiter.<span style="color:#50fa7b">Done</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>		j.<span style="color:#50fa7b">Run</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>	}()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>}
+</span></span></code></pre></div><p>startJob 启动一个协程跑结构体实现的函数 Run()</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#ff79c6">case</span> newEntry <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">&lt;-</span>c.add:
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>				timer.<span style="color:#50fa7b">Stop</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>				now = c.<span style="color:#50fa7b">now</span>()
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>				newEntry.Next = newEntry.Schedule.<span style="color:#50fa7b">Next</span>(now)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span>				c.entries = <span style="color:#8be9fd;font-style:italic">append</span>(c.entries, newEntry)
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span>				c.logger.<span style="color:#50fa7b">Info</span>(<span style="color:#f1fa8c">&#34;added&#34;</span>, <span style="color:#f1fa8c">&#34;now&#34;</span>, now, <span style="color:#f1fa8c">&#34;entry&#34;</span>, newEntry.ID, <span style="color:#f1fa8c">&#34;next&#34;</span>, newEntry.Next)
+</span></span></code></pre></div><p>继续回到轮询逻辑<br>
 run() 也会轮询 add channel，前边提到过，如果 cron 在 running status，新添加的任务就是放到 add channel 中<br>
 所以这里拿到新增的任务后，停止计时器，计算任务的下次执行时间，添加到 entries 中，下次死循环逻辑中这个任务就生效了<br>
 到这里基本上就结束了，剩下就是 cron 快照、停止、删除任务的逻辑，逻辑不复杂，这里不再具体分析</p>
-    </article>
-    <section class="article-series">
-      <h2 class="series-title"><a href="/series/go-cron-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/"><i class="fas fa-book"></i>&nbsp;go-cron 源码分析</a></h2>
-      <ol reversed="reversed" class="series">
-        <li class="active">go-cron 源码分析</li>
-      </ol>
-    </section>
 
-    
+        <hr style="visibility: hidden;" />
+        <ul class="pager">
+          
+          <li class="previous">
+            <a href="/about/" data-toggle="tooltip" data-placement="top" title="About">
+              Previous<br>
+              <span>About</span>
+            </a>
+          </li>
+          
+          
+          <li class="next">
+            <a href="/posts/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/" data-toggle="tooltip" data-placement="top" title="一致性哈希">
+              Next<br>
+              <span>一致性哈希</span>
+            </a>
+          </li>
+          
+        </ul>
+        <hr style="visibility: hidden;" />
 
-    <div class="disqus-comments">
-      <div id="disqus_thread"></div>
+        
+        
+<div id="disqus_thread"></div>
 <script type="application/javascript">
     window.disqus_config = function () {
     
@@ -620,27 +464,207 @@ run() 也会轮询 add channel，前边提到过，如果 cron 在 running statu
 </script>
 <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 <a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+
+
+
+
+
+      </div>
+
+      
+      
+      
+      <div class="
+              col-lg-2 col-lg-offset-0
+              visible-lg-block
+              sidebar-container
+              catalog-container">
+        <div class="side-catalog">
+          <hr class="hidden-sm hidden-xs">
+          <h5>
+            <a class="catalog-toggle" href="#">CATALOG</a>
+          </h5>
+          <ul class="catalog-body"></ul>
+        </div>
+      </div>
+      
+      
+      <div class="
+              col-lg-8 col-lg-offset-2
+              col-md-10 col-md-offset-1
+              sidebar-container">
+
+        
+        
+        <section>
+  
+  
+  <hr class="hidden-sm hidden-xs">
+  
+  <h5>FEATURED TAGS</h5>
+  <div class="tags">
+    
+    <a href="/tags/c/">c</a>
+    
+    <a href="/tags/go-cron/">go-cron</a>
+    
+    <a href="/tags/go-zero/">go-zero</a>
+    
+    <a href="/tags/golang/">golang</a>
+    
+    <a href="/tags/index/">index</a>
+    
+    <a href="/tags/redis/">redis</a>
+    
+    <a href="/tags/%E5%88%9B%E5%BB%BA%E5%9E%8B/">创建型</a>
+    
+    <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">数据结构</a>
+    
+    <a href="/tags/%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/">源码分析</a>
+    
+    <a href="/tags/%E7%AE%97%E6%B3%95/">算法</a>
+    
+    <a href="/tags/%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99/">设计原则</a>
+    
+  </div>
+</section>
+
+        
+        
+
+<hr>
+<h5>FRIENDS</h5>
+<ul class="list-inline">
+  
+  <li><a href="" target="_blank"></a></li>
+  
+  <li><a href="" target="_blank"></a></li>
+  
+</ul>
+
+      </div>
     </div>
-
-    <ul class="pager article-pager">
-      <li class="pager-newer">
-          <a href="/posts/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/" data-toggle="tooltip" data-placement="top" title="一致性哈希">&lt; 上一篇</a>
-      </li>
-      <li class="pager-older pager-noitem">下一篇 &gt;</li>
-    </ul>
   </div>
+</article>
 
 
-<div class="site-footer">
-  <div class="copyright">&copy; Copyright 2017 雾雨七辰</div>
-  <ul class="site-footer-items">
-    <li class="site-footer-item-about"><a href="/about/" title="关于我">关于我</a></li>
-  </ul>
-  <div class="powerdby">
-    Powered by <a href="https://gohugo.io/">Hugo</a>
+
+  
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        
+        <ul class="list-inline text-center">
+
+<li>
+  <a href="https://github.com/comien" target="_blank">
+    <span class="fa-stack fa-lg">
+      <i class="fa fa-circle fa-stack-2x"></i>
+      <i class="fab fa-github fa-stack-1x fa-inverse"></i>
+    </span>
+  </a>
+</li>
+
+
+<li>
+  <a href="/index.xml" target="_blank">
+    <span class="fa-stack fa-lg">
+      <i class="fa fa-circle fa-stack-2x"></i>
+      <i class="fas fa-rss fa-stack-1x fa-inverse"></i>
+    </span>
+  </a>
+</li></ul>
+
+        <p class="copyright text-muted">
+          Copyright &copy; 雾雨七辰 2023  
+          <br>
+          Powered by <a href="https://gohugo.io">Hugo</a>
+        </p>
+      </div>
+    </div>
   </div>
-</div>
+</footer>
 
+<script src=/js/jquery.min.js></script>
+<script src=/js/bootstrap.min.js crossorigin="anonymous"></script>
+
+
+
+<script src="/js/hux-blog.min.c4ea77041cd3edbfc8b2622cd887a9a5d8760a4162d14489e36d2a3fa4c90172.js"></script>
+
+
+<script src=/js/simple-jekyll-search.min.js></script>
+
+
+<script src="/js/search.min.53bce5da475b4d362500e5ce5dddfa22e20e1b9018777411d2020b4b839c9310.js"></script>
+
+
+
+
+
+
+<script type="text/javascript">
+  function generateCatalog(selector) {
+    _containerSelector = 'div.post-container'
+    
+    var P = $(_containerSelector), a, n, t, l, i, c;
+    a = P.find('h1,h2,h3,h4');
+    
+    $(selector).html('')
+    
+    a.each(function () {
+      n = $(this).prop('tagName').toLowerCase();
+      i = "#" + $(this).prop('id');
+      t = $(this).text();
+      c = $('<a href="' + i + '" rel="nofollow">' + t + '</a>');
+      l = $('<li class="' + n + '_nav"></li>').append(c);
+      $(selector).append(l);
+    });
+    return true;
+  }
+
+  generateCatalog(".catalog-body");
+
+  
+  $(".catalog-toggle").click((function (e) {
+    e.preventDefault();
+    $('.side-catalog').toggleClass("fold")
+  }))
+</script>
+
+
+<script type="text/javascript" src='/js/jquery.nav.min.ade6bde8f9fcc6a4b40852cb892e9f5912340ab8fe1305149d917fdd16fffd8d.js'></script>
+<script>
+   $(document).ready( function () {
+    $('.catalog-body').onePageNav({
+      currentClass: "active",
+      changeHash: !1,
+      easing: "swing",
+      filter: "",
+      scrollSpeed: 700,
+      scrollOffset: 0,
+      scrollThreshold: .2,
+      begin: null,
+      end: null,
+      scrollChange: null,
+      padding: 80
+    });
+  });
+</script>
+
+
+
+
+
+
+
+
+
+<script src="/zoomjs/zoom.min.js"></script>
 
 </body>
+
 </html>

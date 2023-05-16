@@ -5,8 +5,7 @@
     <link>https://comien.github.io/tags/redis/</link>
     <description>Recent content in redis on 雾雨七辰</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>ja</language>
-    <copyright>&amp;copy; Copyright 2017 雾雨七辰</copyright>
+    <language>en</language>
     <lastBuildDate>Mon, 17 Apr 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/tags/redis/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>redis hash table</title>
