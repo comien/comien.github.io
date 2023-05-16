@@ -79,14 +79,5 @@
       <description>&lt;p&gt;go-cron 是我们开发中经常使用的定时任务库&lt;/p&gt;</description>
     </item>
     
-    <item>
-      <title>About</title>
-      <link>https://comien.github.io/about/</link>
-      <pubDate>Fri, 29 Oct 2021 00:00:00 +0000</pubDate>
-      
-      <guid>https://comien.github.io/about/</guid>
-      <description>&lt;p&gt;关于我&lt;/p&gt;</description>
-    </item>
-    
   </channel>
 </rss>
