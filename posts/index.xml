@@ -6,7 +6,19 @@
     <description>Recent content in Posts on 雾雨七辰</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Mon, 17 Apr 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 17 May 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Tauri</title>
+      <link>https://comien.github.io/posts/tauri/</link>
+      <pubDate>Wed, 17 May 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://comien.github.io/posts/tauri/</guid>
+      <description>&lt;p&gt;我个人使用了一段时间 Rust，起初比较难入手，有些劝退。但是了解 Rust 一些特性并且能写一些功能的之后，喜欢上了 Rust 代码的舒适度。&lt;br&gt;
+Tauri 是用 Rust 写的桌面应用程序框架，可与 Electron 媲美。
+因为我不熟悉 Vue，所以我的代码中使用 react 作为 UI 部分。&lt;br&gt;
+&lt;a href=&#34;https://tauri.app/zh-cn/&#34; target=&#34;_blank&#34;&gt;Tauri 官方文档&lt;/a&gt;&lt;/p&gt;</description>
+    </item>
+    
     <item>
       <title>redis hash table</title>
       <link>https://comien.github.io/posts/redis-hash-table/</link>

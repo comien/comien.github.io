@@ -8,22 +8,21 @@
 
   
     
-  <title>设计原则 | 雾雨七辰</title>
+  <title>Tauri | 雾雨七辰</title>
   <meta name="author" content="Comien">
-  <meta name="description" content="开发中常用的设计原则">
+  <meta name="description" content="Tauri 桌面客户端">
   <meta name="keywords" content="blog,developer,personal">
 
   <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="设计原则"/>
-<meta name="twitter:description" content="开发中常用的设计原则"/>
+<meta name="twitter:title" content="Tauri"/>
+<meta name="twitter:description" content="Tauri 桌面客户端"/>
 
-  <meta property="og:title" content="设计原则" />
-<meta property="og:description" content="开发中常用的设计原则" />
+  <meta property="og:title" content="Tauri" />
+<meta property="og:description" content="Tauri 桌面客户端" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://comien.github.io/posts/%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99/" /><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2022-08-02T00:00:00+00:00" />
-<meta property="article:modified_time" content="2022-08-02T00:00:00+00:00" />
-
+<meta property="og:url" content="https://comien.github.io/posts/tauri/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-05-17T00:00:00+00:00" />
+<meta property="article:modified_time" content="2023-05-17T00:00:00+00:00" />
 
 
   <link rel="stylesheet" href="/css/bootstrap.min.css"  crossorigin="anonymous">
@@ -172,14 +171,16 @@
         <div class="post-heading">
           <div class="tags">
             
-            <a class="tag" href="/tags/%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99/" title="设计原则">设计原则</a>
+            <a class="tag" href="/tags/rust/" title="rust">rust</a>
+            
+            <a class="tag" href="/tags/tauri/" title="tauri">tauri</a>
             
           </div>
-          <h1>设计原则</h1>
+          <h1>Tauri</h1>
           <h2 class="subheading"></h2>
           <span class="meta">
             Posted by  雾雨七辰 
-            on Tue, Aug 2, 2022
+            on Wed, May 17, 2023
           </span>
         </div>
       </div>
@@ -200,45 +201,46 @@
               col-lg-8 col-lg-offset-2
               col-md-10 col-md-offset-1
               post-container">
-        <p>开发中使用的设计原则</p>
-<h2 id="solid">SOLID<a class="anchorjs-link" href="#solid"></a></h2><h3 id="single-responsibility-principle">Single Responsibility Principle<a class="anchorjs-link" href="#single-responsibility-principle"></a></h3><p>A class or module should have a single responsibility<br>
-一个类或者模块应该只有一个职责</p>
-<h3 id="open-closed-principle">Open Closed Principle<a class="anchorjs-link" href="#open-closed-principle"></a></h3><p>software entities (modules, classes, functions, etc.) should be open for extension , but closed for modification<br>
-软件实体应该对扩展开发，对修改关闭<br>
-功能的增加/修改，应该优先代码扩展</p>
-<h3 id="liskov-substitution-principle">Liskov Substitution Principle<a class="anchorjs-link" href="#liskov-substitution-principle"></a></h3><p>If S is a subtype of T, then objects of type T may be replaced with objects of type S, without breaking the program<br>
-S 是 T 的子类，T 可以在不破坏程序行为下，被 S 替换</p>
-<h3 id="interface-segregation-principle">Interface Segregation Principle<a class="anchorjs-link" href="#interface-segregation-principle"></a></h3><p>Clients should not be forced to depend upon interfaces that they do not use<br>
-客户不应该被强制依赖他不需要的接口</p>
-<h3 id="dependency-inversion-principle">Dependency Inversion Principle<a class="anchorjs-link" href="#dependency-inversion-principle"></a></h3><p>High-level modules shouldn’t depend on low-level modules. Both modules should depend on abstractions. In addition, abstractions shouldn’t depend on details. Details depend on abstractions<br>
-高级模块不应该依赖低级模块。两者应该依赖抽象。另外，抽象不应该依赖细节。细节依赖抽象</p>
-<h2 id="kiss">KISS<a class="anchorjs-link" href="#kiss"></a></h2><p>Keep It Simple and Stupid<br>
-保持简单和清晰</p>
-<h2 id="yagni">YAGNI<a class="anchorjs-link" href="#yagni"></a></h2><p>You Ain’t Gonna Need It<br>
-你不会需要它</p>
-<h2 id="dont-repeat-yourself">Don&rsquo;t Repeat Yourself<a class="anchorjs-link" href="#dont-repeat-yourself"></a></h2><p>不要重复代码</p>
-<h2 id="law-of-demeter">Law of Demeter<a class="anchorjs-link" href="#law-of-demeter"></a></h2><p>The Least Knowledge Principle<br>
-最小知识原则<br>
-Each unit should have only limited knowledge about other units: only units “closely” related to the current unit. Or: Each unit should only talk to its friends; Don’t talk to strangers<br>
-每个单元应该只了解和自身密切相关的单元。或者，每个单元应该只和自己朋友说话，不要和陌生人说话。</p>
+        <p>我个人使用了一段时间 Rust，起初比较难入手，有些劝退。但是了解 Rust 一些特性并且能写一些功能的之后，喜欢上了 Rust 代码的舒适度。<br>
+Tauri 是用 Rust 写的桌面应用程序框架，可与 Electron 媲美。
+因为我不熟悉 Vue，所以我的代码中使用 react 作为 UI 部分。<br>
+<a href="https://tauri.app/zh-cn/" target="_blank">Tauri 官方文档</a></p>
+<h2 id="getting-started">getting started<a class="anchorjs-link" href="#getting-started"></a></h2><p>开始写代码前，需要安装 cli 脚手架工具，帮助我们创建项目。<br>
+Tauri 脚手架兼容了多数前端栈，因为 Tauri 逻辑需要 Rust，所以我选择 <code>cargo</code> 安装 cli。
+<code>create-tauri-app</code> 帮助我们创建项目框架模板。<br>
+我们借助 <code>tauri-cli</code> 调试应用。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span>cargo install create-tauri-app
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span>cargo install tauri-cli
+</span></span></code></pre></div><h3 id="创建项目">创建项目<a class="anchorjs-link" href="#%e5%88%9b%e5%bb%ba%e9%a1%b9%e7%9b%ae"></a></h3><p>安装完成后，我们可以借助 create-tauri-app 创建项目框架。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#6272a4"># my-tauri-app 项目名</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">2</span><span><span style="color:#6272a4"># --template react 前端框架</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">3</span><span>cargo create-tauri-app my-tauri-app --template react --manager pnpm
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">4</span><span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">5</span><span><span style="color:#8be9fd;font-style:italic">cd</span> my-tauri-app
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">6</span><span><span style="color:#6272a4"># 把依赖安装上</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">7</span><span>npm install
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">8</span><span><span style="color:#6272a4"># 启动应用</span>
+</span></span><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">9</span><span>cargo tauri dev
+</span></span></code></pre></div><p>这样 tauri 的模板应用就启动了<br>
+<figure>
+  <a class="paragraph-image">
+    <img data-src="/img/helloworld.jpg" data-action="zoom" alt=""  class="lazyload">
+  </a>
+  
+</figure></p>
+<h2 id="其他">其他<a class="anchorjs-link" href="#%e5%85%b6%e4%bb%96"></a></h2><h3 id="怎么查看前端-console-log">怎么查看前端 console log<a class="anchorjs-link" href="#%e6%80%8e%e4%b9%88%e6%9f%a5%e7%9c%8b%e5%89%8d%e7%ab%af-console-log"></a></h3><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span style="white-space:pre;-webkit-user-select:none;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f">1</span><span><span style="color:#8be9fd;font-style:italic">command</span> + option + i
+</span></span></code></pre></div>
 
         <hr style="visibility: hidden;" />
         <ul class="pager">
           
           <li class="previous">
-            <a href="/posts/fifo/" data-toggle="tooltip" data-placement="top" title="FIFO 环形队列">
+            <a href="/posts/redis-hash-table/" data-toggle="tooltip" data-placement="top" title="redis hash table">
               Previous<br>
-              <span>FIFO 环形队列</span>
+              <span>redis hash table</span>
             </a>
           </li>
           
-          
-          <li class="next">
-            <a href="/posts/%E5%88%9B%E5%BB%BA%E5%9E%8B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" data-toggle="tooltip" data-placement="top" title="创建型设计模式">
-              Next<br>
-              <span>创建型设计模式</span>
-            </a>
-          </li>
           
         </ul>
         <hr style="visibility: hidden;" />
