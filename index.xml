@@ -6,11 +6,11 @@
     <description>Recent content on 雾雨七辰</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 17 May 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 18 May 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>React 基础</title>
       <link>https://comien.github.io/posts/react/%E5%9F%BA%E7%A1%80/</link>
-      <pubDate>Wed, 17 May 2023 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 18 May 2023 00:00:00 +0000</pubDate>
       
       <guid>https://comien.github.io/posts/react/%E5%9F%BA%E7%A1%80/</guid>
       <description>本文通过小案例记录在 React 应用中经常用的一些特性，方便使用的时候查询。 其中会使用 antd-design 的一些组件来举例子，所以这里并不是从零开始讲 React。 参数传</description>
