@@ -8,6 +8,15 @@
     <language>en</language>
     <lastBuildDate>Wed, 19 Jul 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/tags/rust/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>tokio console</title>
+      <link>https://comien.github.io/posts/rust/tokio-console/</link>
+      <pubDate>Wed, 19 Jul 2023 00:00:00 +0000</pubDate>
+      
+      <guid>https://comien.github.io/posts/rust/tokio-console/</guid>
+      <description>总在别人的代码中看到 console_subscriber::init(); console_subscriber 是做什么的呢？console_subscriber 是一个订阅者，用来采集订阅异步任务的状态。 那采集的数据怎么查看呢？</description>
+    </item>
+    
+    <item>
       <title>基础知识</title>
       <link>https://comien.github.io/posts/rust/%E5%86%85%E5%AD%98/</link>
       <pubDate>Wed, 19 Jul 2023 00:00:00 +0000</pubDate>
