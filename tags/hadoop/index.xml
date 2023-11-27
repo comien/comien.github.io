@@ -6,15 +6,14 @@
     <description>Recent content in Hadoop on 雾雨七辰</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 09 Jun 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/tags/hadoop/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Fri, 09 Jun 2023 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://comien.github.io/tags/hadoop/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>hadoop 分布式集群</title>
       <link>https://comien.github.io/series/bigdata/hadoop-%E5%88%86%E5%B8%83%E5%BC%8F%E9%9B%86%E7%BE%A4/</link>
       <pubDate>Fri, 09 Jun 2023 00:00:00 +0000</pubDate>
-      
       <guid>https://comien.github.io/series/bigdata/hadoop-%E5%88%86%E5%B8%83%E5%BC%8F%E9%9B%86%E7%BE%A4/</guid>
       <description>&lt;p&gt;Hadoop 分布式集群搭建&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>

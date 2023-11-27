@@ -6,126 +6,108 @@
     <description>Recent content on 雾雨七辰</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Thu, 20 Jul 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 27 Nov 2023 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://comien.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>FlinkCDC TiDB 源码分析</title>
+      <link>https://comien.github.io/series/bigdata/flink-cdc-tidb-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</link>
+      <pubDate>Mon, 27 Nov 2023 00:00:00 +0000</pubDate>
+      <guid>https://comien.github.io/series/bigdata/flink-cdc-tidb-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90/</guid>
+      <description>&lt;p&gt;FlinkCDC TiKVRichParallelSourceFunction 算子读取快照数据逻辑分析。&lt;/p&gt;</description>
+    </item>
     <item>
       <title>tokio console</title>
       <link>https://comien.github.io/posts/rust/tokio-console/</link>
       <pubDate>Thu, 20 Jul 2023 00:00:00 +0000</pubDate>
-      
       <guid>https://comien.github.io/posts/rust/tokio-console/</guid>
       <description>总在别人的代码中看到 console_subscriber::init(); console_subscriber 是做什么的呢？console_subscriber 是一个订阅者，用来采集订阅异步任务的状态。 那采集的数据怎么查看呢？</description>
     </item>
-    
     <item>
       <title>基础知识</title>
       <link>https://comien.github.io/posts/rust/%E5%86%85%E5%AD%98/</link>
       <pubDate>Wed, 19 Jul 2023 00:00:00 +0000</pubDate>
-      
       <guid>https://comien.github.io/posts/rust/%E5%86%85%E5%AD%98/</guid>
       <description>内存日常工作中，总会遇到堆溢出或者栈溢出的错误。我们也经常听到，基本数据类型在栈上，对象分配到堆上之类的话。 那栈和堆到底是什么呢，什么时候使</description>
     </item>
-    
     <item>
       <title>hadoop 分布式集群</title>
       <link>https://comien.github.io/series/bigdata/hadoop-%E5%88%86%E5%B8%83%E5%BC%8F%E9%9B%86%E7%BE%A4/</link>
       <pubDate>Fri, 09 Jun 2023 00:00:00 +0000</pubDate>
-      
       <guid>https://comien.github.io/series/bigdata/hadoop-%E5%88%86%E5%B8%83%E5%BC%8F%E9%9B%86%E7%BE%A4/</guid>
       <description>&lt;p&gt;Hadoop 分布式集群搭建&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>React 基础</title>
       <link>https://comien.github.io/posts/react/%E5%9F%BA%E7%A1%80/</link>
       <pubDate>Thu, 18 May 2023 00:00:00 +0000</pubDate>
-      
       <guid>https://comien.github.io/posts/react/%E5%9F%BA%E7%A1%80/</guid>
       <description>本文通过小案例记录在 React 应用中经常用的一些特性，方便使用的时候查询。 其中会使用 antd-design 的一些组件来举例子，所以这里并不是从零开始讲 React。 参数传</description>
     </item>
-    
     <item>
       <title>Tauri</title>
       <link>https://comien.github.io/posts/tauri/</link>
       <pubDate>Wed, 17 May 2023 00:00:00 +0000</pubDate>
-      
       <guid>https://comien.github.io/posts/tauri/</guid>
       <description>&lt;p&gt;我个人使用了一段时间 Rust，起初比较难入手，有些劝退。但是了解 Rust 一些特性并且能写一些功能的之后，喜欢上了 Rust 代码的舒适度。&lt;br&gt;
 Tauri 是用 Rust 写的桌面应用程序框架，可与 Electron 媲美。
 因为我不熟悉 Vue，所以我的代码中使用 react 作为 UI 部分。&lt;br&gt;
 &lt;a href=&#34;https://tauri.app/zh-cn/&#34; target=&#34;_blank&#34;&gt;Tauri 官方文档&lt;/a&gt;&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>redis hash table</title>
-      <link>https://comien.github.io/posts/redis-hash-table/</link>
+      <link>https://comien.github.io/series/code-analyse/redis-hash-table/</link>
       <pubDate>Mon, 17 Apr 2023 00:00:00 +0000</pubDate>
-      
-      <guid>https://comien.github.io/posts/redis-hash-table/</guid>
+      <guid>https://comien.github.io/series/code-analyse/redis-hash-table/</guid>
       <description>&lt;p&gt;分析 redis 5 版本源码&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>redis sds</title>
-      <link>https://comien.github.io/posts/redis-sds/</link>
+      <link>https://comien.github.io/series/code-analyse/redis-sds/</link>
       <pubDate>Thu, 13 Apr 2023 00:00:00 +0000</pubDate>
-      
-      <guid>https://comien.github.io/posts/redis-sds/</guid>
+      <guid>https://comien.github.io/series/code-analyse/redis-sds/</guid>
       <description>&lt;p&gt;分析 redis 5 版本源码&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>创建型设计模式</title>
       <link>https://comien.github.io/posts/%E5%88%9B%E5%BB%BA%E5%9E%8B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</link>
       <pubDate>Wed, 03 Aug 2022 00:00:00 +0000</pubDate>
-      
       <guid>https://comien.github.io/posts/%E5%88%9B%E5%BB%BA%E5%9E%8B%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</guid>
       <description>&lt;p&gt;开发中使用的创建型设计模式&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>设计原则</title>
       <link>https://comien.github.io/posts/%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99/</link>
       <pubDate>Tue, 02 Aug 2022 00:00:00 +0000</pubDate>
-      
       <guid>https://comien.github.io/posts/%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99/</guid>
       <description>&lt;p&gt;开发中使用的设计原则&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>FIFO 环形队列</title>
-      <link>https://comien.github.io/posts/fifo/</link>
+      <link>https://comien.github.io/series/code-analyse/fifo/</link>
       <pubDate>Sat, 30 Jul 2022 00:00:00 +0000</pubDate>
-      
-      <guid>https://comien.github.io/posts/fifo/</guid>
+      <guid>https://comien.github.io/series/code-analyse/fifo/</guid>
       <description>&lt;p&gt;FiFO(first in first out) 先进先出环形队列，数组实现&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>Ring Buffer</title>
-      <link>https://comien.github.io/posts/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/</link>
+      <link>https://comien.github.io/series/code-analyse/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/</link>
       <pubDate>Sat, 30 Jul 2022 00:00:00 +0000</pubDate>
-      
-      <guid>https://comien.github.io/posts/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/</guid>
+      <guid>https://comien.github.io/series/code-analyse/%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA/</guid>
       <description>&lt;p&gt;ring buffer 是开发中比较实用的数据结构，实现也很简单。&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>一致性哈希</title>
-      <link>https://comien.github.io/posts/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/</link>
+      <link>https://comien.github.io/series/code-analyse/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/</link>
       <pubDate>Sun, 17 Jul 2022 00:00:00 +0000</pubDate>
-      
-      <guid>https://comien.github.io/posts/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/</guid>
+      <guid>https://comien.github.io/series/code-analyse/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/</guid>
       <description>&lt;p&gt;分析 go-zero 中的一致性哈希。源码在 core/hash/consistenthash.go&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title>go-cron 源码分析</title>
-      <link>https://comien.github.io/posts/go-cron/</link>
+      <link>https://comien.github.io/series/code-analyse/go-cron/</link>
       <pubDate>Wed, 06 Jul 2022 00:00:00 +0000</pubDate>
-      
-      <guid>https://comien.github.io/posts/go-cron/</guid>
+      <guid>https://comien.github.io/series/code-analyse/go-cron/</guid>
       <description>&lt;p&gt;go-cron 是我们开发中经常使用的定时任务库&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>

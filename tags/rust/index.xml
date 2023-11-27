@@ -6,36 +6,31 @@
     <description>Recent content in rust on 雾雨七辰</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Thu, 20 Jul 2023 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/tags/rust/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 20 Jul 2023 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://comien.github.io/tags/rust/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>tokio console</title>
       <link>https://comien.github.io/posts/rust/tokio-console/</link>
       <pubDate>Thu, 20 Jul 2023 00:00:00 +0000</pubDate>
-      
       <guid>https://comien.github.io/posts/rust/tokio-console/</guid>
       <description>总在别人的代码中看到 console_subscriber::init(); console_subscriber 是做什么的呢？console_subscriber 是一个订阅者，用来采集订阅异步任务的状态。 那采集的数据怎么查看呢？</description>
     </item>
-    
     <item>
       <title>基础知识</title>
       <link>https://comien.github.io/posts/rust/%E5%86%85%E5%AD%98/</link>
       <pubDate>Wed, 19 Jul 2023 00:00:00 +0000</pubDate>
-      
       <guid>https://comien.github.io/posts/rust/%E5%86%85%E5%AD%98/</guid>
       <description>内存日常工作中，总会遇到堆溢出或者栈溢出的错误。我们也经常听到，基本数据类型在栈上，对象分配到堆上之类的话。 那栈和堆到底是什么呢，什么时候使</description>
     </item>
-    
     <item>
       <title>Tauri</title>
       <link>https://comien.github.io/posts/tauri/</link>
       <pubDate>Wed, 17 May 2023 00:00:00 +0000</pubDate>
-      
       <guid>https://comien.github.io/posts/tauri/</guid>
       <description>&lt;p&gt;我个人使用了一段时间 Rust，起初比较难入手，有些劝退。但是了解 Rust 一些特性并且能写一些功能的之后，喜欢上了 Rust 代码的舒适度。&lt;br&gt;
 Tauri 是用 Rust 写的桌面应用程序框架，可与 Electron 媲美。
 因为我不熟悉 Vue，所以我的代码中使用 react 作为 UI 部分。&lt;br&gt;
 &lt;a href=&#34;https://tauri.app/zh-cn/&#34; target=&#34;_blank&#34;&gt;Tauri 官方文档&lt;/a&gt;&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>

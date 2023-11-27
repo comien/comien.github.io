@@ -5,6 +5,7 @@
     <link>https://comien.github.io/series/cloud-native/</link>
     <description>Recent content in 云原生 on 雾雨七辰</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en</language><atom:link href="https://comien.github.io/series/cloud-native/index.xml" rel="self" type="application/rss+xml" />
+    <language>en</language>
+    <atom:link href="https://comien.github.io/series/cloud-native/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>

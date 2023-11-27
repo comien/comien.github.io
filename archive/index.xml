@@ -5,6 +5,7 @@
     <link>https://comien.github.io/archive/</link>
     <description>Recent content in 归档 on 雾雨七辰</description>
     <generator>Hugo -- gohugo.io</generator>
-    <language>en</language><atom:link href="https://comien.github.io/archive/index.xml" rel="self" type="application/rss+xml" />
+    <language>en</language>
+    <atom:link href="https://comien.github.io/archive/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>

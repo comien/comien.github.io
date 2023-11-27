@@ -6,15 +6,14 @@
     <description>Recent content in go-cron on 雾雨七辰</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
-    <lastBuildDate>Wed, 06 Jul 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://comien.github.io/tags/go-cron/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Wed, 06 Jul 2022 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://comien.github.io/tags/go-cron/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>go-cron 源码分析</title>
-      <link>https://comien.github.io/posts/go-cron/</link>
+      <link>https://comien.github.io/series/code-analyse/go-cron/</link>
       <pubDate>Wed, 06 Jul 2022 00:00:00 +0000</pubDate>
-      
-      <guid>https://comien.github.io/posts/go-cron/</guid>
+      <guid>https://comien.github.io/series/code-analyse/go-cron/</guid>
       <description>&lt;p&gt;go-cron 是我们开发中经常使用的定时任务库&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>
